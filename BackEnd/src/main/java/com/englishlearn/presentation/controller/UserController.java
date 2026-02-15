@@ -1,5 +1,6 @@
 package com.englishlearn.presentation.controller;
 
+import com.englishlearn.application.dto.request.ChangePasswordRequest;
 import com.englishlearn.application.dto.request.CreateUserRequest;
 import com.englishlearn.application.dto.response.ApiResponse;
 import com.englishlearn.application.dto.response.UserResponse;
@@ -144,5 +145,35 @@ public class UserController {
             @RequestParam Integer amount) {
         userService.addCoins(id, amount);
         return ResponseEntity.ok(ApiResponse.success("Đã thêm " + amount + " xu"));
+    }
+
+    /**
+     * GET /api/v1/users/students - Tìm kiếm học sinh
+     */
+    @GetMapping("/students")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SCHOOL', 'TEACHER')")
+    @Operation(summary = "Tìm kiếm học sinh")
+    public ResponseEntity<ApiResponse<Page<UserResponse>>> searchStudents(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @AuthenticationPrincipal UserDetails userDetails,
+            Pageable pageable) {
+        
+        UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
+        Long schoolId = currentUser.getSchoolId();
+        
+        return ResponseEntity.ok(ApiResponse.success(userService.searchStudents(keyword, schoolId, pageable)));
+    }
+
+    /**
+     * PATCH /api/v1/users/me/password - Đổi mật khẩu
+     */
+    @PatchMapping("/me/password")
+    @Operation(summary = "Đổi mật khẩu")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid ChangePasswordRequest request) {
+        UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
+        userService.changePassword(currentUser.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công"));
     }
 }
