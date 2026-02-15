@@ -188,6 +188,39 @@ export default function ClassRoomsPage() {
         fetchClassStudents(r.id)
     }
 
+    const [addingStudentOpen, setAddingStudentOpen] = useState(false)
+    const [searchStudent, setSearchStudent] = useState('')
+    const [searchResult, setSearchResult] = useState<User[]>([])
+    const [searchingStudent, setSearchingStudent] = useState(false)
+
+    const handleSearchStudents = async () => {
+        if (!searchStudent.trim()) return
+        setSearchingStudent(true)
+        try {
+            const res = await api.get<ApiResponse<Page<User>>>('/users/students', {
+                params: { keyword: searchStudent, size: 5 }
+            })
+            setSearchResult(res.data.data.content)
+        } catch {
+            setSearchResult([])
+        } finally {
+            setSearchingStudent(false)
+        }
+    }
+
+    const handleAddStudent = async (studentId: number) => {
+        if (!viewingStudents) return
+        try {
+            await api.post(`/classes/${viewingStudents.id}/students/${studentId}`)
+            toast.success('Đã thêm học sinh vào lớp')
+            // Refresh list
+            fetchClassStudents(viewingStudents.id)
+            fetchRooms()
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Không thể thêm học sinh')
+        }
+    }
+
     const handleRemoveStudent = async (studentId: number) => {
         if (!viewingStudents) return
         if (!confirm('Bạn có chắc muốn xóa học sinh này khỏi lớp?')) return
@@ -432,8 +465,15 @@ export default function ClassRoomsPage() {
             <Dialog open={!!viewingStudents} onOpenChange={(open) => !open && setViewingStudents(null)}>
                 <DialogContent className="max-w-3xl">
                     <DialogHeader>
-                        <DialogTitle>Học sinh lớp {viewingStudents?.name}</DialogTitle>
-                        <DialogDescription>Danh sách học sinh trong lớp</DialogDescription>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <DialogTitle>Học sinh lớp {viewingStudents?.name}</DialogTitle>
+                                <DialogDescription>Danh sách học sinh trong lớp</DialogDescription>
+                            </div>
+                            <Button size="sm" onClick={() => setAddingStudentOpen(true)}>
+                                <Plus className="h-4 w-4 mr-1" /> Thêm học sinh
+                            </Button>
+                        </div>
                     </DialogHeader>
                     <div className="max-h-[60vh] overflow-y-auto">
                         {loadingStudents ? (
@@ -476,6 +516,74 @@ export default function ClassRoomsPage() {
                                 </TableBody>
                             </Table>
                         )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Student Search Dialog */}
+            <Dialog open={addingStudentOpen} onOpenChange={setAddingStudentOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Thêm học sinh vào lớp {viewingStudents?.name}</DialogTitle>
+                        <DialogDescription>Tìm kiếm học sinh theo tên, email hoặc username</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="Nhập tên, email hoặc username..."
+                                value={searchStudent}
+                                onChange={(e) => setSearchStudent(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearchStudents()}
+                            />
+                            <Button onClick={() => handleSearchStudents()} disabled={searchingStudent}>
+                                {searchingStudent ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                            </Button>
+                        </div>
+
+                        <div className="max-h-[300px] overflow-y-auto border rounded-md">
+                            {searchingStudent ? (
+                                <div className="flex justify-center py-8">
+                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : searchResult.length === 0 ? (
+                                <p className="text-center text-muted-foreground py-8">
+                                    {searchStudent ? 'Không tìm thấy học sinh nào' : 'Nhập từ khóa để tìm kiếm'}
+                                </p>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Họ tên</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead className="text-right">Hành động</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {searchResult.map((u) => {
+                                            const isAlreadyInClass = classStudents.some(cs => cs.id === u.id);
+                                            return (
+                                                <TableRow key={u.id}>
+                                                    <TableCell className="font-medium">
+                                                        <div>{u.fullName}</div>
+                                                        <div className="text-xs text-muted-foreground">{u.username}</div>
+                                                    </TableCell>
+                                                    <TableCell>{u.email}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        {isAlreadyInClass ? (
+                                                            <Badge variant="secondary">Đã trong lớp</Badge>
+                                                        ) : (
+                                                            <Button size="sm" onClick={() => handleAddStudent(u.id)}>
+                                                                Thêm
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
