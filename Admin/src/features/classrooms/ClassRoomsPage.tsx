@@ -166,6 +166,42 @@ export default function ClassRoomsPage() {
         setDialogOpen(true)
     }
 
+    const [viewingStudents, setViewingStudents] = useState<ClassRoom | null>(null)
+    const [classStudents, setClassStudents] = useState<User[]>([])
+    const [loadingStudents, setLoadingStudents] = useState(false)
+
+    const fetchClassStudents = async (classId: number) => {
+        setLoadingStudents(true)
+        try {
+            const res = await api.get<ApiResponse<User[]>>(`/classes/${classId}/students`)
+            setClassStudents(res.data.data)
+        } catch {
+            toast.error('Không thể tải danh sách học sinh')
+            setClassStudents([])
+        } finally {
+            setLoadingStudents(false)
+        }
+    }
+
+    const openStudentList = (r: ClassRoom) => {
+        setViewingStudents(r)
+        fetchClassStudents(r.id)
+    }
+
+    const handleRemoveStudent = async (studentId: number) => {
+        if (!viewingStudents) return
+        if (!confirm('Bạn có chắc muốn xóa học sinh này khỏi lớp?')) return
+
+        try {
+            await api.delete(`/classes/${viewingStudents.id}/students/${studentId}`)
+            toast.success('Đã xóa học sinh khỏi lớp')
+            fetchClassStudents(viewingStudents.id)
+            fetchRooms() // Refresh student count
+        } catch {
+            toast.error('Xóa học sinh thất bại')
+        }
+    }
+
     const filtered = rooms.filter((r) =>
         r.name.toLowerCase().includes(search.toLowerCase()) ||
         (r.schoolName && r.schoolName.toLowerCase().includes(search.toLowerCase())) ||
@@ -236,7 +272,11 @@ export default function ClassRoomsPage() {
                                         <TableCell className="text-muted-foreground">{r.schoolName || '—'}</TableCell>
                                         <TableCell>{r.teacherName || '—'}</TableCell>
                                         <TableCell className="text-muted-foreground">{r.academicYear || '—'}</TableCell>
-                                        <TableCell>{r.studentCount ?? 0}</TableCell>
+                                        <TableCell>
+                                            <Button variant="link" className="p-0 h-auto font-normal" onClick={() => openStudentList(r)}>
+                                                {r.studentCount ?? 0} học sinh
+                                            </Button>
+                                        </TableCell>
                                         <TableCell>
                                             <Badge variant={r.isActive ? 'default' : 'secondary'}>
                                                 {r.isActive ? 'Hoạt động' : 'Tạm dừng'}
@@ -385,6 +425,58 @@ export default function ClassRoomsPage() {
                             Xóa
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Student List Dialog */}
+            <Dialog open={!!viewingStudents} onOpenChange={(open) => !open && setViewingStudents(null)}>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Học sinh lớp {viewingStudents?.name}</DialogTitle>
+                        <DialogDescription>Danh sách học sinh trong lớp</DialogDescription>
+                    </DialogHeader>
+                    <div className="max-h-[60vh] overflow-y-auto">
+                        {loadingStudents ? (
+                            <div className="flex justify-center py-8">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : classStudents.length === 0 ? (
+                            <p className="text-center text-muted-foreground py-8">Lớp chưa có học sinh nào</p>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>ID</TableHead>
+                                        <TableHead>Username</TableHead>
+                                        <TableHead>Họ tên</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead className="text-right">Thao tác</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {classStudents.map((s) => (
+                                        <TableRow key={s.id}>
+                                            <TableCell>{s.id}</TableCell>
+                                            <TableCell>{s.username}</TableCell>
+                                            <TableCell className="font-medium">{s.fullName}</TableCell>
+                                            <TableCell>{s.email}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-destructive"
+                                                    onClick={() => handleRemoveStudent(s.id)}
+                                                    title="Xóa khỏi lớp"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

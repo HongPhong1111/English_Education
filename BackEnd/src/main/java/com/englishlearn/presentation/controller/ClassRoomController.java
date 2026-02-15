@@ -112,6 +112,15 @@ public class ClassRoomController {
         return ResponseEntity.ok(ApiResponse.success("Thêm học sinh vào lớp thành công", null));
     }
 
+    @GetMapping("/{classId}/students")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SCHOOL', 'TEACHER')")
+    @Operation(summary = "Get students in a classroom")
+    public ResponseEntity<ApiResponse<List<com.englishlearn.application.dto.response.UserResponse>>> getStudentsByClass(
+            @PathVariable Long classId) {
+        List<com.englishlearn.application.dto.response.UserResponse> students = classRoomService.getStudentsByClass(classId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách học sinh thành công", students));
+    }
+
     @DeleteMapping("/{classId}/students/{studentId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SCHOOL', 'TEACHER')")
     @Operation(summary = "Remove a student from classroom")
