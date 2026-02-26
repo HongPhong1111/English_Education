@@ -2,14 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 import {
     Layers,
     List,
-    ChevronLeft,
-    ChevronRight,
     Search,
     Volume2,
-    BookmarkPlus,
     AlertCircle,
-    Shuffle,
     Sparkles,
+    RotateCcw,
+    CheckCircle,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
@@ -19,6 +17,9 @@ import FlashCard from '../../components/ui/FlashCard'
 import DataTable from '../../components/ui/DataTable'
 import PageHero from '../../components/ui/PageHero'
 import Skeleton from '../../components/ui/Skeleton'
+
+/** Placeholder image for vocabulary when imageUrl is empty - stitch style */
+const PLACEHOLDER_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuD9gIun82348tU1ik-4NMDKlf3MdXoxP8IsFZo9yHWGcEwFqoK6lkOZFs3ZfjiKB-gL8hWICKYrcBVOhKaFKW2UQIKOnS-6w3xR2W84sJFtwXxxVr13TDBqDGrfCaGvTR_2TpE0bMq-XpYVfl7MJpIZ6g8gUsVk9nacEl__atrxNW8QObKPB3QfSN1FfTMDZb8Po9-nFqvhIF1qPvKGcZ41VpNm7sEnfpr3zYWEuAnC7fIwwiABEPViC__ZJeNfruaQTOBh3xJ2OZ9P'
 
 type ViewMode = 'flashcard' | 'list'
 
@@ -90,16 +91,33 @@ export default function VocabularyPage() {
         audio.play().catch(() => {})
     }
 
-    const handleAddMistake = async (vocabId: number) => {
-        if (!user?.id || addingMistake || mistakeAdded.has(vocabId)) return
-        setAddingMistake(true)
-        try {
-            await mistakeApi.addMistake({ vocabularyId: vocabId })
-            setMistakeAdded((prev) => new Set(prev).add(vocabId))
-        } catch (err) {
-            console.error('Failed to add mistake:', err)
-        } finally {
-            setAddingMistake(false)
+    const handleStudyAgain = async () => {
+        const currentCard = flashcards[flashcardIndex]
+        if (!currentCard) return
+        if (user?.id && !addingMistake && !mistakeAdded.has(currentCard.id)) {
+            setAddingMistake(true)
+            try {
+                await mistakeApi.addMistake({ vocabularyId: currentCard.id })
+                setMistakeAdded((prev) => new Set(prev).add(currentCard.id))
+            } catch (err) {
+                console.error('Failed to add mistake:', err)
+            } finally {
+                setAddingMistake(false)
+            }
+        }
+        goToNext()
+    }
+
+    const handleIKnowThis = () => {
+        goToNext()
+    }
+
+    const goToNext = () => {
+        if (flashcardIndex < flashcards.length - 1) {
+            setFlashcardIndex((i) => i + 1)
+        } else {
+            // Hết thẻ - có thể shuffle để học lại
+            fetchFlashcards()
         }
     }
 
@@ -188,17 +206,16 @@ export default function VocabularyPage() {
             {mode === 'flashcard' && (
                 <div>
                     {flashcardLoading ? (
-                        <div className="max-w-lg mx-auto space-y-6">
-                            <div className="flex justify-between">
-                                <Skeleton className="h-5 w-16 rounded" />
-                                <Skeleton className="h-8 w-24 rounded-lg" />
+                        <div className="max-w-[800px] mx-auto space-y-6">
+                            <div className="flex justify-between items-center">
+                                <Skeleton className="h-6 w-48 rounded" />
+                                <Skeleton className="h-7 w-24 rounded-full" />
                             </div>
-                            <Skeleton className="h-2 w-full rounded-full" />
-                            <Skeleton className="h-[260px] w-full rounded-2xl" />
-                            <div className="flex justify-between">
-                                <Skeleton className="h-10 w-24 rounded-xl" />
-                                <Skeleton className="h-10 w-32 rounded-xl" />
-                                <Skeleton className="h-10 w-24 rounded-xl" />
+                            <Skeleton className="h-3 w-full rounded-full" />
+                            <Skeleton className="h-[450px] w-full rounded-2xl" />
+                            <div className="flex gap-4 justify-center">
+                                <Skeleton className="h-14 w-40 rounded-xl" />
+                                <Skeleton className="h-14 w-40 rounded-xl" />
                             </div>
                         </div>
                     ) : flashcardError ? (
@@ -229,136 +246,125 @@ export default function VocabularyPage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.3 }}
-                            className="max-w-lg mx-auto space-y-6"
+                            className="max-w-[800px] mx-auto flex flex-col gap-6"
                         >
-                            <div className="flex items-center justify-between">
-                                <motion.p
-                                    key={flashcardIndex}
-                                    initial={{ scale: 0.8, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="text-sm font-medium text-[var(--color-text-secondary)]"
-                                >
-                                    <span className="font-bold text-primary-500">{flashcardIndex + 1}</span>
-                                    <span className="mx-1">/</span>
-                                    {flashcards.length}
-                                </motion.p>
-                                <motion.button
-                                    onClick={fetchFlashcards}
-                                    className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl font-medium bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:bg-violet-500/15 hover:text-violet-500 transition-all duration-200"
-                                    whileHover={{ scale: 1.03 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <Shuffle className="w-4 h-4" />
-                                    Trộn lại
-                                </motion.button>
-                            </div>
-
-                            <div className="w-full h-2 rounded-full overflow-hidden bg-[var(--color-bg-secondary)]">
-                                <motion.div
-                                    className="h-full rounded-full bg-primary-500"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${progressPercent}%` }}
-                                    transition={{ type: 'spring', stiffness: 50, damping: 20 }}
-                                />
-                            </div>
-
-                            <AnimatePresence mode="wait">
-                                {currentCard && (
+                            {/* Progress Header - stitch variant 2 */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+                                        <Layers className="w-6 h-6 text-primary-500" strokeWidth={2} />
+                                        <span className="text-lg font-bold">Vocabulary Flashcards</span>
+                                    </div>
+                                    <div className="px-3 py-1.5 rounded-full bg-primary-500/10 text-primary-500 text-sm font-bold">
+                                        {flashcardIndex + 1} / {flashcards.length} Thẻ
+                                    </div>
+                                </div>
+                                <div className="relative w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                     <motion.div
-                                        key={currentCard.id}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        transition={{ duration: 0.25 }}
-                                    >
-                                        <FlashCard
-                                            front={
-                                                <div>
-                                                    <p className="text-3xl font-bold mb-3 text-[var(--color-text)]">
-                                                        {currentCard.word}
-                                                    </p>
-                                                    {currentCard.audioUrl && (
-                                                        <motion.button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                playAudio(currentCard.audioUrl!)
-                                                            }}
-                                                            className="inline-flex items-center gap-2 text-xs px-4 py-2 rounded-full bg-primary-500/15 text-primary-500 hover:bg-primary-500/25 transition-colors"
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                        >
-                                                            <Volume2 className="w-4 h-4" />
-                                                            Phát âm
-                                                        </motion.button>
-                                                    )}
-                                                </div>
-                                            }
-                                            back={
-                                                <div className="space-y-2 text-left">
-                                                    <p className="text-xl font-semibold text-[var(--color-text)]">
-                                                        {currentCard.meaning}
-                                                    </p>
-                                                    {currentCard.pronunciation && (
-                                                        <p className="text-sm italic text-[var(--color-text-secondary)]">
-                                                            /{currentCard.pronunciation}/
-                                                        </p>
-                                                    )}
-                                                    {currentCard.exampleSentence && (
-                                                        <p className="text-sm mt-3 text-[var(--color-text-secondary)]">
-                                                            "{currentCard.exampleSentence}"
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            }
-                                        />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                                        className="absolute top-0 left-0 h-full bg-primary-500 rounded-full"
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${progressPercent}%` }}
+                                        transition={{ type: 'spring', stiffness: 50, damping: 20 }}
+                                    />
+                                </div>
+                            </div>
 
-                            <div className="flex items-center justify-between">
-                                <motion.button
-                                    onClick={() => setFlashcardIndex((i) => Math.max(0, i - 1))}
-                                    disabled={flashcardIndex === 0}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-[var(--color-bg-tertiary)] text-[var(--color-text)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-500/15 hover:text-primary-500 transition-colors duration-200"
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                    Trước
-                                </motion.button>
+                            {/* Flashcard - stitch layout: 65% image, 35% word */}
+                            <div className="flex-1 min-h-[500px] flex flex-col items-center justify-center perspective-[1000px]">
+                                <AnimatePresence mode="wait">
+                                    {currentCard && (
+                                        <motion.div
+                                            key={currentCard.id}
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            transition={{ duration: 0.25 }}
+                                            className="w-full"
+                                        >
+                                            <FlashCard
+                                                height={450}
+                                                front={
+                                                    <div className="h-full flex flex-col">
+                                                        <div className="h-[65%] min-h-0 relative bg-slate-100 dark:bg-slate-800">
+                                                            <div
+                                                                className="absolute inset-0 bg-cover bg-center"
+                                                                style={{
+                                                                    backgroundImage: `url('${currentCard.imageUrl || PLACEHOLDER_IMAGE}')`,
+                                                                }}
+                                                            />
+                                                            {currentCard.audioUrl && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        playAudio(currentCard.audioUrl!)
+                                                                    }}
+                                                                    className="absolute top-4 right-4 bg-white/90 dark:bg-black/70 backdrop-blur-sm p-2.5 rounded-lg shadow-sm hover:scale-110 transition-transform"
+                                                                    title="Phát âm"
+                                                                >
+                                                                    <Volume2 className="w-5 h-5 text-primary-500" strokeWidth={2} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <div className="h-[35%] flex flex-col items-center justify-center gap-2 p-8 bg-white dark:bg-slate-900">
+                                                            <h3 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                                                {currentCard.word}
+                                                            </h3>
+                                                            <p className="text-slate-400 dark:text-slate-500 font-medium text-sm">
+                                                                Chạm để lật thẻ
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                back={
+                                                    <div className="space-y-2 text-left px-4">
+                                                        <p className="text-xl font-semibold text-[var(--color-text)]">
+                                                            {currentCard.meaning}
+                                                        </p>
+                                                        {currentCard.pronunciation && (
+                                                            <p className="text-sm italic text-[var(--color-text-secondary)]">
+                                                                /{currentCard.pronunciation}/
+                                                            </p>
+                                                        )}
+                                                        {currentCard.exampleSentence && (
+                                                            <p className="text-sm mt-3 text-[var(--color-text-secondary)]">
+                                                                &quot;{currentCard.exampleSentence}&quot;
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                }
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
 
-                                {currentCard && (
+                            {/* Action Controls - stitch variant 2 */}
+                            <div className="flex flex-col items-center gap-6 pb-8">
+                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                                    Bạn đã trả lời đúng chưa?
+                                </p>
+                                <div className="flex flex-col sm:flex-row w-full gap-4 max-w-[600px]">
                                     <motion.button
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleAddMistake(currentCard.id)
-                                        }}
-                                        disabled={addingMistake || mistakeAdded.has(currentCard.id)}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-all duration-200 disabled:cursor-not-allowed ${
-                                            mistakeAdded.has(currentCard.id)
-                                                ? 'bg-success-500/15 text-success-500'
-                                                : 'bg-red-500/15 text-red-500 hover:bg-red-500/25'
-                                        }`}
-                                        whileHover={{ scale: 1.03 }}
-                                        whileTap={{ scale: 0.97 }}
+                                        onClick={handleStudyAgain}
+                                        disabled={addingMistake}
+                                        className="group flex-1 h-14 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
                                     >
-                                        <BookmarkPlus className="w-4 h-4" />
-                                        {mistakeAdded.has(currentCard.id) ? 'Đã thêm' : 'Thêm sổ lỗi'}
+                                        <RotateCcw className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2} />
+                                        Học lại
                                     </motion.button>
-                                )}
-
-                                <motion.button
-                                    onClick={() =>
-                                        setFlashcardIndex((i) => Math.min(flashcards.length - 1, i + 1))
-                                    }
-                                    disabled={flashcardIndex >= flashcards.length - 1}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-[var(--color-bg-tertiary)] text-[var(--color-text)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-500/15 hover:text-primary-500 transition-colors duration-200"
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                >
-                                    Sau
-                                    <ChevronRight className="w-4 h-4" />
-                                </motion.button>
+                                    <motion.button
+                                        onClick={handleIKnowThis}
+                                        className="group flex-1 h-14 bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center gap-2 active:scale-95"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <CheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2} />
+                                        Tôi biết từ này
+                                    </motion.button>
+                                </div>
                             </div>
                         </motion.div>
                     )}
