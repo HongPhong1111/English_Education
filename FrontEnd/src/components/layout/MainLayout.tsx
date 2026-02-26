@@ -22,7 +22,7 @@ const MainLayout = () => {
         <div className="min-h-screen flex flex-col transition-colors duration-300">
             <Header />
 
-            <div className="flex flex-1 pt-16">
+            <div className="flex flex-1">
                 {showSidebar && <Sidebar />}
 
                 <main className={`flex-1 transition-all duration-300 ${showSidebar ? 'ml-64' : ''}`}>
