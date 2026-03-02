@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { userApi } from '../../services/api/userApi'
 import { getRoleDashboard } from '../../lib/roles'
-import { User, Mail, Lock, ArrowRight, ArrowLeft, School, Check } from 'lucide-react'
+import { User, Mail, Lock, ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import { AVATARS, type Avatar } from '../../constants/avatars'
 
 const MASCOT_URL = 'https://lh3.googleusercontent.com/aida-public/AB6AXuD0aO4gpunlu02PLWAUmJ7s8bvVvwt2UJey0fzaBr2TrhxdLRrAQQbBmkBbgKVS81cuADz7QgGKxFznJpiDbW7sYGSKJPVmLNF8kn1SEkabCFlvU1BEamoI-9zPUGGoGV3VOLMz3MB0LQFxM_QnsSMB1m7kvW0NU5CZ3pgUVD1Xh98g5pWFl57xLzHiGcgvfTJVeCUbnwXtsMpSMxKw9Y5xVkyDXVlaAOmj3HE6gzwm9p5WUnCbZal_hUunGr0FTL1It2w6DEM29_nl'
@@ -72,23 +72,7 @@ export default function Register() {
     const displayError = error || validationError
 
     return (
-        <div className="min-h-screen flex flex-col bg-background-light dark:bg-background-dark font-sans">
-            {/* Header */}
-            <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 px-4 py-4 md:px-10 bg-white dark:bg-slate-900">
-                <Link to="/" className="flex items-center gap-3">
-                    <div className="size-8 flex items-center justify-center text-primary-500">
-                        <School className="w-8 h-8" strokeWidth={2} />
-                    </div>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">EnglishLearn</h2>
-                </Link>
-                <div className="flex items-center gap-2">
-                    <span className="text-slate-600 dark:text-slate-400 text-sm">Đã có tài khoản?</span>
-                    <Link to="/login" className="text-primary-500 hover:text-primary-600 font-bold text-sm">
-                        Đăng nhập
-                    </Link>
-                </div>
-            </header>
-
+        <div className="bg-background-light dark:bg-background-dark font-sans">
             <main className="flex-1 flex justify-center py-8 px-4 sm:px-6 lg:px-8">
                 <div className="w-full max-w-[1024px] flex flex-col gap-8">
                     {/* Progress */}
@@ -332,7 +316,7 @@ export default function Register() {
                                             <ArrowRight className="w-6 h-6" strokeWidth={2.5} />
                                         </button>
                                         <Link
-                                            to="/profile"
+                                            to="/settings"
                                             className="block w-full h-12 text-slate-500 dark:text-slate-400 font-medium text-sm hover:text-primary-500 transition-colors leading-[3rem]"
                                         >
                                             Đổi avatar của tôi
@@ -344,10 +328,6 @@ export default function Register() {
                     )}
                 </div>
             </main>
-
-            <footer className="text-center text-sm text-slate-500 dark:text-slate-500 py-4">
-                © 2024 EnglishLearn. Mọi quyền được bảo lưu.
-            </footer>
         </div>
     )
 }

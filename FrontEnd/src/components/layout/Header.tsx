@@ -50,7 +50,7 @@ const Header = () => {
                             {user?.id && <NotificationComponent userId={user.id} />}
                             <Badge variant="info">{roleLabel}</Badge>
                             <Link
-                                to="/profile"
+                                to="/settings"
                                 className="text-sm font-medium hover:text-primary-500 transition-colors"
                                 style={{ color: 'var(--color-text)' }}
                             >

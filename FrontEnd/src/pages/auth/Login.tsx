@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { getRoleDashboard } from '../../lib/roles'
-import { User, Lock, ArrowRight, School } from 'lucide-react'
+import { User, Lock, ArrowRight } from 'lucide-react'
 
 const LOGIN_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBwz77tXPhtaVu71kbj1TYD3l4p2jrk53hH9M-HUwzmI7Fd3fWTYTOoNvYzVAjftKhQi5Jxkumt-seiEd19PZ1EC5OwFpB2Mx8kj-G71H1R4G_vTXX_Hdo9NUrxac0RBZ5S-5AqOr4pHkyyVlFfh0g2hLjLffj0oYKdDAkvlVBrNv1rkeVAPGMfBzHo5in_EZJXI3Ozc10qM9DqUa6fjv54CLAIwXJWRxRYMZ_EYlywsq2vHs2I7zOnlD5maL2lAaiEJSJQPu3K1d9u'
 
@@ -39,42 +39,8 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-background-light dark:bg-background-dark font-sans">
-            {/* Header */}
-            <header className="w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 md:px-10 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3">
-                        <div className="size-8 flex items-center justify-center text-primary-500">
-                            <School className="w-8 h-8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                        </div>
-                        <h2 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                            EnglishLearn
-                        </h2>
-                    </Link>
-                    <div className="flex items-center gap-6">
-                        <nav className="hidden md:flex items-center gap-8">
-                            <Link to="/" className="text-slate-700 dark:text-slate-300 hover:text-primary-500 font-medium transition-colors">
-                                Trang chủ
-                            </Link>
-                            <a href="#features" className="text-slate-700 dark:text-slate-300 hover:text-primary-500 font-medium transition-colors">
-                                Giới thiệu
-                            </a>
-                            <a href="#" className="text-slate-700 dark:text-slate-300 hover:text-primary-500 font-medium transition-colors">
-                                Liên hệ
-                            </a>
-                        </nav>
-                        <Link
-                            to="/register"
-                            className="bg-primary-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold transition-all transform hover:scale-105 shadow-sm"
-                        >
-                            Đăng ký
-                        </Link>
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content */}
-            <main className="flex-grow flex items-center justify-center py-10 px-4 md:px-6 w-full">
+        <div className="bg-background-light dark:bg-background-dark font-sans">
+            <main className="flex items-center justify-center py-10 px-4 md:px-6 w-full">
                 <div className="max-w-6xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
                     <div className="grid lg:grid-cols-2 gap-0 min-h-[600px]">
                         {/* Left Column: Illustration */}
@@ -215,10 +181,6 @@ export default function Login() {
                     </div>
                 </div>
             </main>
-
-            <footer className="w-full py-6 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
-                <p>© 2024 EnglishLearn. Mọi quyền được bảo lưu.</p>
-            </footer>
         </div>
     )
 }

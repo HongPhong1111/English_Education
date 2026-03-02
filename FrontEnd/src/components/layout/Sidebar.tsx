@@ -8,6 +8,7 @@ import {
     BookMarked, Award, Settings, GraduationCap, HelpCircle,
     BarChart3, Flame, School
 } from 'lucide-react'
+import { ClipboardList } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 interface MenuItem {
@@ -18,6 +19,7 @@ interface MenuItem {
 
 const studentMenuItems: MenuItem[] = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+    { icon: ClipboardList, label: 'Nhiệm vụ ngày', path: '/quests' },
     { icon: BookOpen, label: 'Bài học', path: '/lessons' },
     { icon: Languages, label: 'Từ vựng', path: '/vocabulary' },
     { icon: FileText, label: 'Bài thi', path: '/exams' },
@@ -146,7 +148,7 @@ const Sidebar = () => {
                 <Link
                     to="/settings"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 mt-4
-                        ${location.pathname === '/settings'
+                        ${location.pathname === '/settings' || location.pathname === '/profile'
                             ? 'bg-primary-500 text-white'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                         }`}

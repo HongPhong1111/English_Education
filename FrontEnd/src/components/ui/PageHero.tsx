@@ -31,16 +31,16 @@ export default function PageHero({ title, subtitle, icon, iconBg = 'primary', ch
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                     <div className="flex items-start gap-4">
                         {icon && (
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${iconBgClasses[iconBg]}`}>
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 min-w-[56px] min-h-[56px] ${iconBgClasses[iconBg]}`}>
                                 {icon}
                             </div>
                         )}
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text)' }}>
+                            <h1 className="text-h1 sm:text-display" style={{ color: 'var(--color-text)' }}>
                                 {title}
                             </h1>
                             {subtitle && (
-                                <p className="mt-1 text-sm sm:text-base" style={{ color: 'var(--color-text-secondary)' }}>
+                                <p className="mt-2 text-body-lg" style={{ color: 'var(--color-text-secondary)' }}>
                                     {subtitle}
                                 </p>
                             )}

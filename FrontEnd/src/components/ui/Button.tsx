@@ -17,10 +17,11 @@ const variantClasses: Record<ButtonVariant, string> = {
     ghost: 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98]',
 }
 
+/* Min 44px touch target for 11-12yo (WCAG AAA) - see docs/UX-KIDS.md */
 const sizeClasses: Record<ButtonSize, string> = {
-    sm: 'px-4 py-2 text-sm rounded-lg',
-    md: 'px-6 py-3 text-base rounded-xl',
-    lg: 'px-8 py-4 text-lg rounded-xl',
+    sm: 'px-4 py-2.5 text-sm rounded-lg min-h-touch min-w-touch',
+    md: 'px-6 py-3 text-body-lg rounded-xl min-h-touch min-w-touch',
+    lg: 'px-8 py-4 text-lg rounded-xl min-h-touch min-w-touch',
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -29,7 +30,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             <button
                 ref={ref}
                 className={`
-                    font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+                    inline-flex items-center justify-center font-medium
+                    transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+                    focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 focus-visible:outline-offset-2
                     ${variantClasses[variant]}
                     ${sizeClasses[size]}
                     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}

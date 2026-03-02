@@ -11,7 +11,10 @@ export default function ClassManagement() {
     const [studentsLoading, setStudentsLoading] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [isAddStudentOpen, setIsAddStudentOpen] = useState(false)
-    const [studentId, setStudentId] = useState('')
+    const [studentKeyword, setStudentKeyword] = useState('')
+    const [searchResults, setSearchResults] = useState<ClassStudentResponse[]>([])
+    const [searching, setSearching] = useState(false)
+    const [selectedCandidate, setSelectedCandidate] = useState<ClassStudentResponse | null>(null)
     const [actionMsg, setActionMsg] = useState({ type: '', text: '' })
     const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -65,14 +68,16 @@ export default function ClassManagement() {
 
     const handleAddStudent = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!selectedClass || !studentId) return
+        if (!selectedClass || !selectedCandidate) return
         
         setIsSubmitting(true)
         setActionMsg({ type: '', text: '' })
         try {
-            await classroomApi.addStudent(selectedClass.id, parseInt(studentId))
+            await classroomApi.addStudent(selectedClass.id, selectedCandidate.id)
             setActionMsg({ type: 'success', text: 'Thêm học sinh vào lớp thành công!' })
-            setStudentId('')
+            setStudentKeyword('')
+            setSearchResults([])
+            setSelectedCandidate(null)
             setIsAddStudentOpen(false)
             // Refresh class data if student count increases
             fetchClasses()
@@ -83,6 +88,35 @@ export default function ClassManagement() {
             setIsSubmitting(false)
         }
     }
+
+    useEffect(() => {
+        if (!isAddStudentOpen || !selectedClass) return
+        const keyword = studentKeyword.trim()
+
+        if (keyword.length < 2) {
+            setSearchResults([])
+            setSearching(false)
+            setSelectedCandidate(null)
+            return
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                setSearching(true)
+                const data = await classroomApi.searchStudents(selectedClass.id, keyword)
+                setSearchResults(data || [])
+                if (selectedCandidate && !data.find((s) => s.id === selectedCandidate.id)) {
+                    setSelectedCandidate(null)
+                }
+            } catch {
+                setSearchResults([])
+            } finally {
+                setSearching(false)
+            }
+        }, 250)
+
+        return () => clearTimeout(timer)
+    }, [isAddStudentOpen, selectedClass?.id, studentKeyword])
 
     if (isLoading) {
         return (
@@ -243,21 +277,63 @@ export default function ClassManagement() {
                         <form onSubmit={handleAddStudent} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-                                    Nhập ID học sinh
+                                    Tìm học sinh (tên / username / email)
                                 </label>
-                                <input
-                                    type="number"
-                                    value={studentId}
-                                    onChange={(e) => setStudentId(e.target.value)}
+                                <div className="relative">
+                                    <input
+                                    type="text"
+                                    value={studentKeyword}
+                                    onChange={(e) => setStudentKeyword(e.target.value)}
                                     className="input-field"
-                                    placeholder="Ví dụ: 123"
+                                    placeholder="Ví dụ: minhkhoa hoặc Trần Minh Khoa"
                                     required
                                     autoFocus
-                                />
+                                    />
+                                    {searching && (
+                                        <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-blue-500" />
+                                    )}
+                                </div>
                                 <p className="mt-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                                    ID này được cấp khi học sinh đăng ký tài khoản.
+                                    Gõ ít nhất 2 ký tự để tìm kiếm học sinh chưa nằm trong lớp này.
                                 </p>
                             </div>
+
+                            {searchResults.length > 0 && (
+                                <div className="max-h-56 overflow-y-auto rounded-xl border" style={{ borderColor: 'var(--color-border)' }}>
+                                    {searchResults.map((candidate) => (
+                                        <button
+                                            key={candidate.id}
+                                            type="button"
+                                            onClick={() => setSelectedCandidate(candidate)}
+                                            className={`w-full text-left px-3 py-2.5 border-b last:border-b-0 transition-colors ${
+                                                selectedCandidate?.id === candidate.id
+                                                    ? 'bg-blue-500/10'
+                                                    : 'hover:bg-slate-500/5'
+                                            }`}
+                                            style={{ borderColor: 'var(--color-border)' }}
+                                        >
+                                            <p className="font-medium" style={{ color: 'var(--color-text)' }}>
+                                                {candidate.fullName || candidate.username}
+                                            </p>
+                                            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                                                @{candidate.username} • {candidate.email || `ID: ${candidate.id}`}
+                                            </p>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {studentKeyword.trim().length >= 2 && !searching && searchResults.length === 0 && (
+                                <div className="p-3 rounded-lg text-sm border bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400">
+                                    Không tìm thấy học sinh phù hợp, thử bằng username hoặc email.
+                                </div>
+                            )}
+
+                            {selectedCandidate && (
+                                <div className="p-3 rounded-lg text-sm border bg-blue-500/10 border-blue-500/30">
+                                    <span className="font-medium">Đã chọn:</span> {selectedCandidate.fullName || selectedCandidate.username} (ID: {selectedCandidate.id})
+                                </div>
+                            )}
 
                             {actionMsg.text && (
                                 <div className={`p-3 rounded-lg text-sm border ${
@@ -279,7 +355,7 @@ export default function ClassManagement() {
                                 </button>
                                 <button 
                                     type="submit"
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !selectedCandidate}
                                     className="flex-1 btn-primary py-2 flex items-center justify-center gap-2"
                                 >
                                     {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
