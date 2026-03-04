@@ -175,79 +175,69 @@ export default function StudentProgressPage() {
     ]
 
     return (
-        <div className="p-6 lg:p-8 space-y-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
-                    Tiến độ học sinh
+        <div className="p-6 lg:p-8 space-y-6 bg-[#F8FAFC] dark:bg-slate-950 min-h-full">
+            <section className="rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-6 md:p-8 shadow-sm">
+                <h1 className="text-2xl md:text-3xl font-black" style={{ color: 'var(--color-text)' }}>
+                    Báo cáo tiến độ học sinh
                 </h1>
-                <p className="mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                    Xem tiến độ học tập của từng học sinh trong lớp
+                <p className="mt-2 text-sm md:text-base" style={{ color: 'var(--color-text-secondary)' }}>
+                    Theo dõi mức độ hoàn thành theo từng lớp và từng học sinh.
                 </p>
-            </div>
+            </section>
 
-            {/* Selectors */}
-            <div className="flex flex-wrap items-end gap-4">
-                {/* Class selector */}
-                <div>
-                    <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-                        Lớp học
-                    </label>
-                    <div className="flex items-center gap-2">
-                        <School className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                        <select
-                            value={selectedClass}
-                            onChange={(e) => handleClassChange(e.target.value)}
-                            disabled={classesLoading}
-                            className="px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40 min-w-[200px]"
-                            style={{
-                                backgroundColor: 'var(--color-bg-secondary)',
-                                borderColor: 'var(--color-bg-secondary)',
-                                color: 'var(--color-text)',
-                            }}
-                        >
-                            <option value="">-- Chọn lớp --</option>
-                            {classes.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
-                        </select>
-                        {classesLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
-                    </div>
-                </div>
-
-                {/* Student selector */}
-                {selectedClass && (
+            <section className="rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm">
+                <div className="flex flex-wrap items-end gap-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-                            Học sinh
+                        <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                            Lớp học
                         </label>
                         <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                            <School className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
                             <select
-                                value={selectedStudent}
-                                onChange={(e) => handleStudentChange(e.target.value)}
-                                disabled={studentsLoading}
-                                className="px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40 min-w-[200px]"
-                                style={{
-                                    backgroundColor: 'var(--color-bg-secondary)',
-                                    borderColor: 'var(--color-bg-secondary)',
-                                    color: 'var(--color-text)',
-                                }}
+                                value={selectedClass}
+                                onChange={(e) => handleClassChange(e.target.value)}
+                                disabled={classesLoading}
+                                className="px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[220px] bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700"
+                                style={{ color: 'var(--color-text)' }}
                             >
-                                <option value="">-- Chọn học sinh --</option>
-                                {students.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.fullName || s.username}
+                                <option value="">-- Chọn lớp --</option>
+                                {classes.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
                                     </option>
                                 ))}
                             </select>
-                            {studentsLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                            {classesLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
                         </div>
                     </div>
-                )}
-            </div>
+
+                    {selectedClass && (
+                        <div>
+                            <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                                Học sinh
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
+                                <select
+                                    value={selectedStudent}
+                                    onChange={(e) => handleStudentChange(e.target.value)}
+                                    disabled={studentsLoading}
+                                    className="px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[240px] bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700"
+                                    style={{ color: 'var(--color-text)' }}
+                                >
+                                    <option value="">-- Chọn học sinh --</option>
+                                    {students.map((s) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.fullName || s.username}
+                                        </option>
+                                    ))}
+                                </select>
+                                {studentsLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </section>
 
             {/* Content */}
             {!selectedClass ? (
@@ -285,7 +275,7 @@ export default function StudentProgressPage() {
                 <>
                     {/* Stat cards */}
                     {stats && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                             <StatCard
                                 icon={<BookOpen className="w-6 h-6" />}
                                 label="Tổng bài học"
@@ -320,12 +310,14 @@ export default function StudentProgressPage() {
                     )}
 
                     {/* Progress table */}
-                    <DataTable
-                        columns={columns}
-                        data={progress as unknown as Record<string, unknown>[]}
-                        loading={false}
-                        emptyMessage="Học sinh chưa có tiến độ học tập nào"
-                    />
+                    <section className="rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 md:p-5 shadow-sm">
+                        <DataTable
+                            columns={columns}
+                            data={progress as unknown as Record<string, unknown>[]}
+                            loading={false}
+                            emptyMessage="Học sinh chưa có tiến độ học tập nào"
+                        />
+                    </section>
                 </>
             )}
         </div>

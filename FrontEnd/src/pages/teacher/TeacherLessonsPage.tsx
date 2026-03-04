@@ -18,6 +18,7 @@ interface Lesson {
     id: number
     title: string
     contentHtml?: string
+    grammarHtml?: string
     difficultyLevel?: number
     orderIndex?: number
     isPublished?: boolean
@@ -28,6 +29,7 @@ interface Lesson {
 interface LessonForm {
     title: string
     contentHtml: string
+    grammarHtml: string
     difficultyLevel: number
     orderIndex: number
     isPublished: boolean
@@ -36,6 +38,7 @@ interface LessonForm {
 const emptyForm: LessonForm = {
     title: '',
     contentHtml: '',
+    grammarHtml: '',
     difficultyLevel: 1,
     orderIndex: 0,
     isPublished: false,
@@ -81,6 +84,7 @@ export default function TeacherLessonsPage() {
         setForm({
             title: lesson.title,
             contentHtml: lesson.contentHtml || '',
+            grammarHtml: lesson.grammarHtml || '',
             difficultyLevel: lesson.difficultyLevel ?? 1,
             orderIndex: lesson.orderIndex ?? 0,
             isPublished: lesson.isPublished ?? false,
@@ -299,6 +303,23 @@ export default function TeacherLessonsPage() {
                             rows={5}
                             value={form.contentHtml}
                             onChange={(e) => setForm({ ...form, contentHtml: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40 resize-y"
+                            style={{
+                                backgroundColor: 'var(--color-bg-secondary)',
+                                borderColor: 'var(--color-bg-secondary)',
+                                color: 'var(--color-text)',
+                            }}
+                        />
+                    </div>
+                    {/* Grammar HTML */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+                            Ngữ pháp (HTML)
+                        </label>
+                        <textarea
+                            rows={4}
+                            value={form.grammarHtml}
+                            onChange={(e) => setForm({ ...form, grammarHtml: e.target.value })}
                             className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40 resize-y"
                             style={{
                                 backgroundColor: 'var(--color-bg-secondary)',
