@@ -2,11 +2,14 @@ package com.englishlearn.application.service;
 
 import com.englishlearn.application.dto.request.LoginRequest;
 import com.englishlearn.application.dto.request.RegisterRequest;
+import com.englishlearn.application.dto.request.ResetPasswordRequest;
 import com.englishlearn.application.dto.response.AuthResponse;
+import com.englishlearn.domain.entity.PasswordResetToken;
 import com.englishlearn.domain.entity.Role;
 import com.englishlearn.domain.entity.User;
 import com.englishlearn.domain.exception.DuplicateResourceException;
 import com.englishlearn.domain.exception.ResourceNotFoundException;
+import com.englishlearn.infrastructure.persistence.PasswordResetTokenRepository;
 import com.englishlearn.infrastructure.persistence.RoleRepository;
 import com.englishlearn.infrastructure.persistence.UserRepository;
 import com.englishlearn.infrastructure.security.JwtService;
@@ -18,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +34,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -93,6 +100,62 @@ public class AuthService {
                 .email(user.getEmail())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                 .build();
+    }
+
+    /**
+     * Quên mật khẩu - Sinh OTP 6 số, lưu DB, gửi email HTML
+     * Luôn trả về success để không tiết lộ email có tồn tại không
+     */
+    @Transactional
+    public void forgotPassword(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            // Xóa token cũ (nếu có)
+            passwordResetTokenRepository.deleteAllByUser(user);
+
+            // Sinh OTP 6 số ngẫu nhiên
+            String otp = String.format("%06d", new SecureRandom().nextInt(1_000_000));
+
+            // Lưu token, hết hạn sau 10 phút
+            PasswordResetToken token = PasswordResetToken.builder()
+                    .user(user)
+                    .otp(otp)
+                    .expiredAt(LocalDateTime.now().plusMinutes(10))
+                    .build();
+            passwordResetTokenRepository.save(token);
+
+            // Gửi email HTML (async)
+            emailService.sendOtpEmail(user.getEmail(), user.getFullName(), otp);
+        });
+    }
+
+    /**
+     * Reset mật khẩu bằng OTP
+     */
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        // Validate OTP
+        PasswordResetToken token = passwordResetTokenRepository
+                .findByOtpAndUsedFalse(request.getOtp())
+                .orElseThrow(() -> new RuntimeException("Mã OTP không hợp lệ hoặc đã được sử dụng"));
+
+        // Kiểm tra hết hạn
+        if (LocalDateTime.now().isAfter(token.getExpiredAt())) {
+            throw new RuntimeException("Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.");
+        }
+
+        // Validate confirm password
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("Mật khẩu xác nhận không khớp");
+        }
+
+        // Cập nhật mật khẩu
+        User user = token.getUser();
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Đánh dấu token đã dùng
+        token.setUsed(true);
+        passwordResetTokenRepository.save(token);
     }
 
     private AuthResponse buildAuthResponse(User user) {

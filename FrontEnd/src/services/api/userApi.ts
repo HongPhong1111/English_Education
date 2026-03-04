@@ -82,11 +82,9 @@ export const userApi = {
     },
 
     /**
-     * Đổi mật khẩu - [LƯU Ý]: Hiện Backend chưa có API này.
-     * Chức năng này hiện chỉ là giao diện ở Frontend.
+     * PATCH /api/v1/users/me/password - Đổi mật khẩu
      */
-    changePassword: async (_currentPassword: string, _newPassword: string): Promise<void> => {
-        console.warn('Backend chưa hỗ trợ API đổi mật khẩu (/users/me/password)')
-        return Promise.resolve()
+    changePassword: async (oldPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
+        await api.patch('/users/me/password', { oldPassword, newPassword, confirmPassword })
     },
 }

@@ -79,4 +79,18 @@ export const authApi = {
         const response = await api.get<ApiResponse<string>>('/auth/health')
         return response.data.data
     },
+
+    /**
+     * POST /api/v1/auth/forgot-password - Gửi OTP về email
+     */
+    forgotPassword: async (email: string): Promise<void> => {
+        await api.post('/auth/forgot-password', { email })
+    },
+
+    /**
+     * POST /api/v1/auth/reset-password - Đặt lại mật khẩu bằng OTP
+     */
+    resetPassword: async (otp: string, newPassword: string, confirmPassword: string): Promise<void> => {
+        await api.post('/auth/reset-password', { otp, newPassword, confirmPassword })
+    },
 }
