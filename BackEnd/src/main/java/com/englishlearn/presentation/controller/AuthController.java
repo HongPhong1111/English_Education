@@ -1,7 +1,9 @@
 package com.englishlearn.presentation.controller;
 
+import com.englishlearn.application.dto.request.ForgotPasswordRequest;
 import com.englishlearn.application.dto.request.LoginRequest;
 import com.englishlearn.application.dto.request.RegisterRequest;
+import com.englishlearn.application.dto.request.ResetPasswordRequest;
 import com.englishlearn.application.dto.response.ApiResponse;
 import com.englishlearn.application.dto.response.AuthResponse;
 import com.englishlearn.application.service.AuthService;
@@ -89,5 +91,29 @@ public class AuthController {
     @Operation(summary = "Kiểm tra trạng thái server")
     public ResponseEntity<ApiResponse<String>> healthCheck() {
         return ResponseEntity.ok(ApiResponse.success("Server đang hoạt động", "OK"));
+    }
+
+    /**
+     * POST /api/v1/auth/forgot-password - Gửi OTP về email
+     */
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Quên mật khẩu - Gửi OTP về email")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
+        // Luôn trả về thành công để không tiết lộ email có tồn tại không
+        return ResponseEntity
+                .ok(ApiResponse.success("Nếu email tồn tại, mã OTP đã được gửi. Vui lòng kiểm tra hộp thư."));
+    }
+
+    /**
+     * POST /api/v1/auth/reset-password - Đặt lại mật khẩu bằng OTP
+     */
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset mật khẩu bằng mã OTP")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @RequestBody @Valid ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."));
     }
 }
