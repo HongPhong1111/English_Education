@@ -50,8 +50,9 @@ public class DevDataSeeder {
         public CommandLineRunner devSeedData() {
                 return args -> {
                         if (userRepository.findByUsername(SEED_ADMIN_USERNAME).isPresent()) {
-                                log.info("Dev data already present (user '{}' exists). Skipping seed.",
+                                log.info("Dev data already present (user '{}' exists). Skip full seed, run grammar backfill.",
                                                 SEED_ADMIN_USERNAME);
+                                backfillGrammarForExistingLessons();
                                 return;
                         }
 
@@ -123,6 +124,7 @@ public class DevDataSeeder {
                                                         + "và cách giới thiệu về ngôi trường của mình bằng tiếng Anh.</p>"
                                                         + "<h3>Grammar Focus</h3>"
                                                         + "<ul><li>Present Simple Tense</li><li>Prepositions of place</li></ul>")
+                                        .grammarHtml(grammarHtmlForUnit(1))
                                         .difficultyLevel(1).orderIndex(1).isPublished(true).build());
 
                         saveVocab(lesson1, "boarding school", "/ˈbɔːdɪŋ skuːl/", "trường nội trú (n)",
@@ -183,6 +185,7 @@ public class DevDataSeeder {
                                                         + "<p>Bài học này giúp các em mô tả ngôi nhà, các phòng và đồ vật trong nhà bằng tiếng Anh.</p>"
                                                         + "<h3>Grammar Focus</h3>"
                                                         + "<ul><li>There is / There are</li><li>Prepositions of place: in, on, under, behind</li></ul>")
+                                        .grammarHtml(grammarHtmlForUnit(2))
                                         .difficultyLevel(1).orderIndex(2).isPublished(true).build());
 
                         saveVocab(lesson2, "country house", "/ˌkʌn.tri ˈhaʊs/", "nhà ở nông thôn (n)",
@@ -238,6 +241,7 @@ public class DevDataSeeder {
                                                         + "<p>Học cách mô tả ngoại hình và tính cách bạn bè bằng tiếng Anh.</p>"
                                                         + "<h3>Grammar Focus</h3>"
                                                         + "<ul><li>Present Continuous Tense</li><li>Adjectives for appearance and personality</li></ul>")
+                                        .grammarHtml(grammarHtmlForUnit(3))
                                         .difficultyLevel(1).orderIndex(3).isPublished(true).build());
 
                         saveVocab(lesson3, "appearance", "/əˈpɪər.əns/", "ngoại hình (n)",
@@ -292,6 +296,7 @@ public class DevDataSeeder {
                                                         + "<p>Học cách mô tả các địa điểm và đặc điểm khu phố nơi em sống.</p>"
                                                         + "<h3>Grammar Focus</h3>"
                                                         + "<ul><li>Comparative adjectives</li><li>Superlative adjectives</li></ul>")
+                                        .grammarHtml(grammarHtmlForUnit(4))
                                         .difficultyLevel(2).orderIndex(4).isPublished(true).build());
 
                         saveVocab(lesson4, "cathedral", "/kəˈθiːdrəl/", "nhà thờ lớn (n)",
@@ -337,6 +342,7 @@ public class DevDataSeeder {
                                                         + "<p>Khám phá các kỳ quan thiên nhiên và học từ vựng về du lịch, thiên nhiên.</p>"
                                                         + "<h3>Grammar Focus</h3>"
                                                         + "<ul><li>Must / Mustn't</li><li>Countable and Uncountable nouns</li></ul>")
+                                        .grammarHtml(grammarHtmlForUnit(5))
                                         .difficultyLevel(2).orderIndex(5).isPublished(true).build());
 
                         saveVocab(lesson5, "desert", "/ˈdez.ət/", "sa mạc (n)",
@@ -384,6 +390,7 @@ public class DevDataSeeder {
                                                         + "<p>Tìm hiểu từ vựng liên quan đến Tết Nguyên Đán - ngày lễ truyền thống quan trọng nhất của Việt Nam.</p>"
                                                         + "<h3>Grammar Focus</h3>"
                                                         + "<ul><li>Should / Shouldn't</li><li>Will for predictions</li></ul>")
+                                        .grammarHtml(grammarHtmlForUnit(6))
                                         .difficultyLevel(2).orderIndex(6).isPublished(true).build());
 
                         saveVocab(lesson6, "family gathering", "/ˈfæməli ˈɡæðərɪŋ/", "sum họp gia đình (n)",
@@ -493,6 +500,78 @@ public class DevDataSeeder {
                                 .build();
         }
 
+        private void backfillGrammarForExistingLessons() {
+                List<Lesson> lessons = lessonRepository.findAll();
+                int updated = 0;
+                for (Lesson lesson : lessons) {
+                        Integer orderIndex = lesson.getOrderIndex();
+                        if (orderIndex == null || orderIndex < 1 || orderIndex > 6) {
+                                continue;
+                        }
+                        String grammarHtml = grammarHtmlForUnit(orderIndex);
+                        if (grammarHtml.equals(lesson.getGrammarHtml())) {
+                                continue;
+                        }
+                        lesson.setGrammarHtml(grammarHtml);
+                        lessonRepository.save(lesson);
+                        updated++;
+                }
+                log.info("Backfilled grammarHtml for {} lessons.", updated);
+        }
+
+        private String grammarHtmlForUnit(int unit) {
+                return switch (unit) {
+                        case 1 -> "<h3>Grammar Focus: Present Simple & Prepositions of Place</h3>"
+                                        + "<p><strong>Present Simple</strong> dùng để nói thói quen, sự thật hiển nhiên.</p>"
+                                        + "<ul>"
+                                        + "<li><strong>Khẳng định:</strong> S + V(s/es). Ví dụ: <em>She studies at Nguyen Du school.</em></li>"
+                                        + "<li><strong>Phủ định:</strong> S + do/does not + V. Ví dụ: <em>He does not go to school on Sunday.</em></li>"
+                                        + "<li><strong>Nghi vấn:</strong> Do/Does + S + V? Ví dụ: <em>Do you wear uniform every day?</em></li>"
+                                        + "</ul>"
+                                        + "<p><strong>Prepositions of place:</strong> in, on, under, behind, next to.</p>"
+                                        + "<p>Ví dụ: <em>The ruler is on the desk.</em></p>";
+                        case 2 -> "<h3>Grammar Focus: There is / There are</h3>"
+                                        + "<ul>"
+                                        + "<li><strong>There is + danh từ số ít:</strong> <em>There is a TV in the living room.</em></li>"
+                                        + "<li><strong>There are + danh từ số nhiều:</strong> <em>There are two bedrooms in my house.</em></li>"
+                                        + "<li><strong>Nghi vấn:</strong> Is there...? / Are there...?</li>"
+                                        + "</ul>"
+                                        + "<p><strong>Prepositions in the house:</strong> in, on, under, behind, between, opposite.</p>"
+                                        + "<p>Ví dụ: <em>The lamp is next to the bed.</em></p>";
+                        case 3 -> "<h3>Grammar Focus: Present Continuous</h3>"
+                                        + "<p>Dùng để diễn tả hành động đang diễn ra tại thời điểm nói.</p>"
+                                        + "<ul>"
+                                        + "<li><strong>Khẳng định:</strong> S + am/is/are + V-ing. <em>They are playing football.</em></li>"
+                                        + "<li><strong>Phủ định:</strong> S + am/is/are not + V-ing.</li>"
+                                        + "<li><strong>Nghi vấn:</strong> Am/Is/Are + S + V-ing?</li>"
+                                        + "</ul>"
+                                        + "<p><strong>Adjectives</strong> mô tả người: friendly, hard-working, talkative, shy...</p>"
+                                        + "<p>Ví dụ: <em>My friend is very hard-working.</em></p>";
+                        case 4 -> "<h3>Grammar Focus: Comparative & Superlative Adjectives</h3>"
+                                        + "<ul>"
+                                        + "<li><strong>So sánh hơn:</strong> adj + er + than / more + adj + than. <em>This street is quieter than that one.</em></li>"
+                                        + "<li><strong>So sánh nhất:</strong> the + adj + est / the most + adj. <em>It is the most convenient place.</em></li>"
+                                        + "</ul>"
+                                        + "<p><strong>Lưu ý:</strong> good → better → best; bad → worse → worst.</p>";
+                        case 5 -> "<h3>Grammar Focus: Must / Mustn't & Countable/Uncountable Nouns</h3>"
+                                        + "<ul>"
+                                        + "<li><strong>Must</strong>: phải làm. <em>You must wear a helmet.</em></li>"
+                                        + "<li><strong>Mustn't</strong>: cấm làm. <em>You mustn't litter.</em></li>"
+                                        + "</ul>"
+                                        + "<p><strong>Danh từ đếm được:</strong> a waterfall, two islands.</p>"
+                                        + "<p><strong>Danh từ không đếm được:</strong> water, sand, information.</p>"
+                                        + "<p>Dùng <strong>some/any, much/many</strong> đúng loại danh từ.</p>";
+                        case 6 -> "<h3>Grammar Focus: Should / Shouldn't & Will</h3>"
+                                        + "<ul>"
+                                        + "<li><strong>Should</strong>: lời khuyên nên làm. <em>You should visit your grandparents.</em></li>"
+                                        + "<li><strong>Shouldn't</strong>: không nên làm. <em>You shouldn't say bad words on New Year's Day.</em></li>"
+                                        + "<li><strong>Will</strong> cho dự đoán tương lai: <em>It will be a lucky year.</em></li>"
+                                        + "</ul>"
+                                        + "<p>Công thức: <strong>S + will + V</strong> / <strong>S + will not (won't) + V</strong>.</p>";
+                        default -> "";
+                };
+        }
+
         private void saveStudentClass(User student, ClassRoom classRoom) {
                 if (studentClassRepository.existsByStudentAndClassRoom(student, classRoom))
                         return;
@@ -515,5 +594,15 @@ public class DevDataSeeder {
         private void saveOption(Question question, String optionText, boolean isCorrect) {
                 questionOptionRepository.save(QuestionOption.builder()
                                 .question(question).optionText(optionText).isCorrect(isCorrect).build());
+
+                // Auto-link question -> vocabulary from the correct option for deterministic mistake tracking.
+                if (isCorrect && question.getVocabulary() == null && question.getLesson() != null) {
+                        vocabularyRepository
+                                        .findByLessonIdAndWordOrMeaningIgnoreCase(question.getLesson().getId(), optionText)
+                                        .ifPresent(vocabulary -> {
+                                                question.setVocabulary(vocabulary);
+                                                questionRepository.save(question);
+                                        });
+                }
         }
 }

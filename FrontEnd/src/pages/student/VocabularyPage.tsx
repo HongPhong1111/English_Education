@@ -8,13 +8,14 @@ import {
     Sparkles,
     RotateCcw,
     CheckCircle,
+    BookOpen,
+    Headphones,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 import { vocabularyApi, VocabularyResponse } from '../../services/api/vocabularyApi'
 import { mistakeApi } from '../../services/api/mistakeApi'
 import FlashCard from '../../components/ui/FlashCard'
-import DataTable from '../../components/ui/DataTable'
 import PageHero from '../../components/ui/PageHero'
 import Skeleton from '../../components/ui/Skeleton'
 
@@ -22,6 +23,7 @@ import Skeleton from '../../components/ui/Skeleton'
 const PLACEHOLDER_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuD9gIun82348tU1ik-4NMDKlf3MdXoxP8IsFZo9yHWGcEwFqoK6lkOZFs3ZfjiKB-gL8hWICKYrcBVOhKaFKW2UQIKOnS-6w3xR2W84sJFtwXxxVr13TDBqDGrfCaGvTR_2TpE0bMq-XpYVfl7MJpIZ6g8gUsVk9nacEl__atrxNW8QObKPB3QfSN1FfTMDZb8Po9-nFqvhIF1qPvKGcZ41VpNm7sEnfpr3zYWEuAnC7fIwwiABEPViC__ZJeNfruaQTOBh3xJ2OZ9P'
 
 type ViewMode = 'flashcard' | 'list'
+type ListFilter = 'all' | 'audio' | 'example' | 'image'
 
 export default function VocabularyPage() {
     const user = useAuthStore((s) => s.user)
@@ -38,6 +40,7 @@ export default function VocabularyPage() {
     const [listLoading, setListLoading] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
+    const [listFilter, setListFilter] = useState<ListFilter>('all')
 
     const fetchFlashcards = useCallback(async () => {
         setFlashcardLoading(true)
@@ -124,49 +127,12 @@ export default function VocabularyPage() {
     const currentCard = flashcards[flashcardIndex]
     const progressPercent = flashcards.length > 0 ? ((flashcardIndex + 1) / flashcards.length) * 100 : 0
 
-    const tableColumns = [
-        {
-            key: 'word',
-            label: 'Từ vựng',
-            render: (item: Record<string, unknown>) => {
-                const vocab = item as unknown as VocabularyResponse
-                return (
-                    <div className="flex items-center gap-2">
-                        <span className="font-medium text-[var(--color-text)]">{vocab.word}</span>
-                        {vocab.audioUrl && (
-                            <button
-                                onClick={() => playAudio(vocab.audioUrl!)}
-                                className="p-1.5 rounded-lg hover:bg-primary-500/15 text-primary-500 transition-all duration-200 hover:scale-110"
-                                title="Phát âm"
-                            >
-                                <Volume2 className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-                )
-            },
-        },
-        {
-            key: 'meaning',
-            label: 'Nghĩa',
-            render: (item: Record<string, unknown>) => {
-                const vocab = item as unknown as VocabularyResponse
-                return <span className="text-[var(--color-text)]">{vocab.meaning}</span>
-            },
-        },
-        {
-            key: 'pronunciation',
-            label: 'Phiên âm',
-            render: (item: Record<string, unknown>) => {
-                const vocab = item as unknown as VocabularyResponse
-                return (
-                    <span className="italic text-sm text-[var(--color-text-secondary)]">
-                        {vocab.pronunciation ? `/${vocab.pronunciation}/` : '—'}
-                    </span>
-                )
-            },
-        },
-    ]
+    const filteredListVocab = listVocab.filter((v) => {
+        if (listFilter === 'audio') return Boolean(v.audioUrl)
+        if (listFilter === 'example') return Boolean(v.exampleSentence)
+        if (listFilter === 'image') return Boolean(v.imageUrl)
+        return true
+    })
 
     return (
         <div className="p-6 lg:p-8 space-y-8">
@@ -375,28 +341,122 @@ export default function VocabularyPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="space-y-4"
+                    className="space-y-6"
                 >
-                    <div className="relative w-full sm:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
-                        <input
-                            type="text"
-                            placeholder="Tìm từ vựng..."
-                            value={searchTerm}
-                            onChange={(e) => handleSearchChange(e.target.value)}
-                            className="input-field pl-10"
-                        />
+                    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                        <div className="flex flex-col gap-1">
+                            <h2 className="text-2xl md:text-3xl font-bold text-[var(--color-text)]">Thư viện từ vựng</h2>
+                            <p className="text-sm text-[var(--color-text-secondary)]">
+                                Khám phá từ mới, nghe phát âm và thêm vào sổ lỗi khi cần ôn lại.
+                            </p>
+                        </div>
+                        <div className="relative w-full md:w-96">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
+                            <input
+                                type="text"
+                                placeholder="Tìm từ vựng..."
+                                value={searchTerm}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="input-field pl-10"
+                            />
+                        </div>
                     </div>
-                    <DataTable
-                        columns={tableColumns}
-                        data={listVocab as unknown as Record<string, unknown>[]}
-                        loading={listLoading}
-                        emptyMessage={
-                            searchTerm
-                                ? `Không tìm thấy từ cho "${searchTerm}"`
-                                : 'Nhập từ khóa để tìm kiếm.'
-                        }
-                    />
+
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                        {[
+                            { key: 'all', label: 'Tất cả' },
+                            { key: 'audio', label: 'Có audio' },
+                            { key: 'example', label: 'Có ví dụ' },
+                            { key: 'image', label: 'Có hình ảnh' },
+                        ].map((f) => (
+                            <button
+                                key={f.key}
+                                onClick={() => setListFilter(f.key as ListFilter)}
+                                className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                                    listFilter === f.key
+                                        ? 'bg-primary-500 text-white border-primary-500'
+                                        : 'bg-white dark:bg-slate-900 text-[var(--color-text-secondary)] border-[var(--color-border)]'
+                                }`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {listLoading ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <Skeleton key={i} className="h-[320px] rounded-2xl" />
+                            ))}
+                        </div>
+                    ) : filteredListVocab.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            {filteredListVocab.map((vocab, index) => (
+                                <motion.div
+                                    key={vocab.id}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.03 }}
+                                    className="group flex flex-col bg-white dark:bg-surface-dark rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-[var(--color-border)]"
+                                >
+                                    <div className="relative h-40 overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                        <img
+                                            src={vocab.imageUrl || PLACEHOLDER_IMAGE}
+                                            alt={vocab.word}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                        <div className="absolute bottom-3 left-3">
+                                            <h3 className="text-white text-lg font-bold">{vocab.word}</h3>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 flex flex-col gap-3 flex-1">
+                                        <p className="text-sm font-medium text-[var(--color-text)] line-clamp-2 min-h-[2.5rem]">
+                                            {vocab.meaning || 'Chưa có nghĩa'}
+                                        </p>
+                                        <p className="text-xs italic text-[var(--color-text-secondary)] min-h-[1rem]">
+                                            {vocab.pronunciation ? `/${vocab.pronunciation}/` : '—'}
+                                        </p>
+                                        <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2 min-h-[2rem]">
+                                            {vocab.exampleSentence || 'Chưa có ví dụ'}
+                                        </p>
+
+                                        <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
+                                            <button
+                                                onClick={() => vocab.audioUrl && playAudio(vocab.audioUrl)}
+                                                disabled={!vocab.audioUrl}
+                                                className="flex items-center justify-center gap-1 h-10 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 text-primary-500 font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                <Headphones className="w-4 h-4" />
+                                                Nghe
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        await mistakeApi.addMistake({ vocabularyId: vocab.id })
+                                                    } catch (err) {
+                                                        console.error('Failed to add mistake from library:', err)
+                                                    }
+                                                }}
+                                                className="flex items-center justify-center gap-1 h-10 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-semibold text-sm transition-colors"
+                                            >
+                                                <BookOpen className="w-4 h-4" />
+                                                Ôn lại
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="card p-12 text-center rounded-2xl">
+                            <p className="text-[var(--color-text-secondary)]">
+                                {searchTerm
+                                    ? `Không tìm thấy từ cho "${searchTerm}" theo bộ lọc hiện tại.`
+                                    : 'Chưa có từ vựng để hiển thị.'}
+                            </p>
+                        </div>
+                    )}
                 </motion.div>
             )}
         </div>

@@ -41,6 +41,8 @@ public class ExamService {
     private final ExamAnswerRepository examAnswerRepository;
     private final QuestionOptionRepository questionOptionRepository;
     private final AntiCheatEventRepository antiCheatEventRepository;
+    private final MistakeNotebookService mistakeNotebookService;
+    private final VocabularyRepository vocabularyRepository;
 
     @Transactional(readOnly = true)
     public Page<ExamResponse> getExamsByTeacher(Long teacherId, Pageable pageable) {
@@ -273,6 +275,8 @@ public class ExamService {
             if (isCorrect) {
                 correctCount++;
                 earnedPoints += question.getPoints();
+            } else {
+                trackMistakeFromWrongAnswer(studentId, question, answer.getSelectedOptionId(), answer.getAnswerText());
             }
         }
 
@@ -667,7 +671,15 @@ public class ExamService {
                         if (Boolean.TRUE.equals(selectedOption.getIsCorrect())) {
                             correctCount++;
                             earnedPoints += question.getPoints();
+                        } else {
+                            trackMistakeFromWrongAnswer(userId, question, selectedOptionId, answer.getTextAnswer());
                         }
+                    }
+                } else if (answer.getQuestionId() != null) {
+                    Question question = questionRepository.findById(answer.getQuestionId()).orElse(null);
+                    if (question != null) {
+                        totalPoints += question.getPoints();
+                        trackMistakeFromWrongAnswer(userId, question, null, answer.getTextAnswer());
                     }
                 }
             }
@@ -716,6 +728,72 @@ public class ExamService {
                 .violationCount(examResult.getViolationCount())
                 .status(status)
                 .build();
+    }
+
+    private void trackMistakeFromWrongAnswer(Long userId, Question question, Long selectedOptionId, String answerText) {
+        if (question == null || question.getLesson() == null) {
+            return;
+        }
+
+        Optional<Vocabulary> vocabularyOpt = resolveVocabularyFromAnswer(question, selectedOptionId, answerText);
+        if (vocabularyOpt.isEmpty()) {
+            return;
+        }
+
+        try {
+            mistakeNotebookService.addMistake(userId, vocabularyOpt.get().getId());
+        } catch (Exception ex) {
+            // Không để lỗi tracking làm fail submit exam.
+            log.warn("Unable to track mistake for user {} and question {}: {}", userId, question.getId(), ex.getMessage());
+        }
+    }
+
+    private Optional<Vocabulary> resolveVocabularyFromAnswer(Question question, Long selectedOptionId, String answerText) {
+        if (question.getVocabulary() != null) {
+            return Optional.of(question.getVocabulary());
+        }
+
+        Long lessonId = question.getLesson().getId();
+
+        if (selectedOptionId != null) {
+            Optional<QuestionOption> selectedOption = questionOptionRepository.findById(selectedOptionId);
+            if (selectedOption.isPresent()) {
+                Optional<Vocabulary> bySelectedText = findVocabularyInLessonByText(lessonId, selectedOption.get().getOptionText());
+                if (bySelectedText.isPresent()) {
+                    return bySelectedText;
+                }
+            }
+        }
+
+        if (answerText != null && !answerText.isBlank()) {
+            Optional<Vocabulary> byAnswerText = findVocabularyInLessonByText(lessonId, answerText);
+            if (byAnswerText.isPresent()) {
+                return byAnswerText;
+            }
+        }
+
+        List<QuestionOption> correctOptions = questionOptionRepository.findByQuestionId(question.getId()).stream()
+                .filter(opt -> Boolean.TRUE.equals(opt.getIsCorrect()))
+                .collect(Collectors.toList());
+        for (QuestionOption option : correctOptions) {
+            Optional<Vocabulary> byCorrectText = findVocabularyInLessonByText(lessonId, option.getOptionText());
+            if (byCorrectText.isPresent()) {
+                return byCorrectText;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private Optional<Vocabulary> findVocabularyInLessonByText(Long lessonId, String rawText) {
+        if (rawText == null) {
+            return Optional.empty();
+        }
+        String normalized = rawText.trim();
+        if (normalized.isEmpty()) {
+            return Optional.empty();
+        }
+        return vocabularyRepository.findByLessonIdAndWordOrMeaningIgnoreCase(lessonId, normalized);
     }
 
     /**

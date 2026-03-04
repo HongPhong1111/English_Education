@@ -256,72 +256,73 @@ export default function QuestionsPage() {
     ]
 
     return (
-        <div className="p-6 lg:p-8 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
-                        Quản lý câu hỏi
-                    </h1>
-                    <p className="mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                        {filtered.length} câu hỏi
-                    </p>
+        <div className="p-6 lg:p-8 space-y-6 bg-[#F8FAFC] dark:bg-slate-950 min-h-full">
+            <section className="rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-6 md:p-8 shadow-sm">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-black" style={{ color: 'var(--color-text)' }}>
+                            Ngân hàng câu hỏi
+                        </h1>
+                        <p className="mt-2 text-sm md:text-base" style={{ color: 'var(--color-text-secondary)' }}>
+                            Quản lý, lọc và cập nhật câu hỏi theo bài học.
+                        </p>
+                    </div>
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Tạo câu hỏi
+                    </button>
                 </div>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    Tạo câu hỏi
-                </button>
-            </div>
+            </section>
 
-            {/* Filters */}
-            <div className="flex flex-wrap items-center gap-3">
-                <Filter className="w-4 h-4" style={{ color: 'var(--color-text-secondary)' }} />
-                <select
-                    value={filterLesson}
-                    onChange={(e) => setFilterLesson(e.target.value)}
-                    className="px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40"
-                    style={{
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        borderColor: 'var(--color-bg-secondary)',
-                        color: 'var(--color-text)',
-                    }}
-                >
-                    <option value="">Tất cả bài học</option>
-                    {lessons.map((l) => (
-                        <option key={l.id} value={l.id}>
-                            {l.title}
-                        </option>
-                    ))}
-                </select>
-                <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40"
-                    style={{
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        borderColor: 'var(--color-bg-secondary)',
-                        color: 'var(--color-text)',
-                    }}
-                >
-                    <option value="">Tất cả loại</option>
-                    {QUESTION_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>
-                            {t.label}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            <section className="rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="inline-flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+                        <Filter className="w-4 h-4" />
+                        Bộ lọc
+                    </div>
+                    <select
+                        value={filterLesson}
+                        onChange={(e) => setFilterLesson(e.target.value)}
+                        className="px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[220px] bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700"
+                        style={{ color: 'var(--color-text)' }}
+                    >
+                        <option value="">Tất cả bài học</option>
+                        {lessons.map((l) => (
+                            <option key={l.id} value={l.id}>
+                                {l.title}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30 min-w-[180px] bg-slate-50 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700"
+                        style={{ color: 'var(--color-text)' }}
+                    >
+                        <option value="">Tất cả loại</option>
+                        {QUESTION_TYPES.map((t) => (
+                            <option key={t.value} value={t.value}>
+                                {t.label}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="ml-auto text-sm font-medium text-slate-500">
+                        {filtered.length} câu hỏi
+                    </div>
+                </div>
+            </section>
 
-            {/* Table */}
-            <DataTable
-                columns={columns}
-                data={filtered as unknown as Record<string, unknown>[]}
-                loading={loading}
-                emptyMessage="Không tìm thấy câu hỏi nào"
-            />
+            <section className="rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 md:p-5 shadow-sm">
+                <DataTable
+                    columns={columns}
+                    data={filtered as unknown as Record<string, unknown>[]}
+                    loading={loading}
+                    emptyMessage="Không tìm thấy câu hỏi nào"
+                />
+            </section>
 
             {/* Create / Edit Dialog */}
             <Dialog
@@ -357,7 +358,7 @@ export default function QuestionsPage() {
                         <select
                             value={form.lessonId}
                             onChange={(e) => setForm({ ...form, lessonId: e.target.value ? parseInt(e.target.value) : '' })}
-                            className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40"
+                            className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30"
                             style={{
                                 backgroundColor: 'var(--color-bg-secondary)',
                                 borderColor: 'var(--color-bg-secondary)',
@@ -381,7 +382,7 @@ export default function QuestionsPage() {
                         <select
                             value={form.questionType}
                             onChange={(e) => setForm({ ...form, questionType: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40"
+                            className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30"
                             style={{
                                 backgroundColor: 'var(--color-bg-secondary)',
                                 borderColor: 'var(--color-bg-secondary)',
@@ -405,7 +406,7 @@ export default function QuestionsPage() {
                             rows={3}
                             value={form.questionText}
                             onChange={(e) => setForm({ ...form, questionText: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40 resize-y"
+                            className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
                             style={{
                                 backgroundColor: 'var(--color-bg-secondary)',
                                 borderColor: 'var(--color-bg-secondary)',
@@ -424,7 +425,7 @@ export default function QuestionsPage() {
                             min={1}
                             value={form.points}
                             onChange={(e) => setForm({ ...form, points: parseInt(e.target.value) || 1 })}
-                            className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40"
+                            className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30"
                             style={{
                                 backgroundColor: 'var(--color-bg-secondary)',
                                 borderColor: 'var(--color-bg-secondary)',
@@ -442,7 +443,7 @@ export default function QuestionsPage() {
                             rows={2}
                             value={form.explanation}
                             onChange={(e) => setForm({ ...form, explanation: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40 resize-y"
+                            className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
                             style={{
                                 backgroundColor: 'var(--color-bg-secondary)',
                                 borderColor: 'var(--color-bg-secondary)',
@@ -485,7 +486,7 @@ export default function QuestionsPage() {
                                         value={opt.optionText}
                                         onChange={(e) => updateOption(idx, 'optionText', e.target.value)}
                                         placeholder={`Đáp án ${idx + 1}`}
-                                        className="flex-1 px-3 py-1.5 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-blue-500/40"
+                                        className="flex-1 px-3 py-2 rounded-xl border text-sm outline-none focus:ring-2 focus:ring-blue-500/30"
                                         style={{
                                             backgroundColor: 'var(--color-bg-secondary)',
                                             borderColor: 'var(--color-bg-secondary)',

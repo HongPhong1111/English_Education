@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
     ArrowLeft,
     BookOpen,
+    FileText,
     Languages,
     Dumbbell,
     CheckCircle,
@@ -21,10 +22,11 @@ import FlashCard from '../../components/ui/FlashCard'
 import QuizQuestion from '../../components/ui/QuizQuestion'
 import Badge from '../../components/ui/Badge'
 
-type TabKey = 'content' | 'vocabulary' | 'practice'
+type TabKey = 'content' | 'grammar' | 'vocabulary' | 'practice'
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'content', label: 'Nội dung', icon: <BookOpen className="w-4 h-4" /> },
+    { key: 'grammar', label: 'Ngữ pháp', icon: <FileText className="w-4 h-4" /> },
     { key: 'vocabulary', label: 'Từ vựng', icon: <Languages className="w-4 h-4" /> },
     { key: 'practice', label: 'Luyện tập', icon: <Dumbbell className="w-4 h-4" /> },
 ]
@@ -53,6 +55,13 @@ export default function LessonDetailPage() {
     const [showResults, setShowResults] = useState(false)
     const [completing, setCompleting] = useState(false)
     const [completed, setCompleted] = useState(false)
+    const [startedLearning, setStartedLearning] = useState(false)
+    const [visitedTabs, setVisitedTabs] = useState<Record<TabKey, boolean>>({
+        content: true,
+        grammar: false,
+        vocabulary: false,
+        practice: false,
+    })
 
     const lessonId = id ? parseInt(id) : null
 
@@ -80,6 +89,10 @@ export default function LessonDetailPage() {
         }
         fetchAll()
     }, [lessonId])
+
+    useEffect(() => {
+        setVisitedTabs((prev) => ({ ...prev, [activeTab]: true }))
+    }, [activeTab])
 
     const handleSelectAnswer = useCallback(
         (questionId: number, optionIds: number[]) => {
@@ -114,12 +127,93 @@ export default function LessonDetailPage() {
         audio.play().catch(() => {})
     }
 
+    const effectiveGrammarHtml = useMemo(() => {
+        if (lesson?.grammarHtml && lesson.grammarHtml.trim()) {
+            return lesson.grammarHtml
+        }
+        const content = lesson?.contentHtml || ''
+        if (!content.trim()) return ''
+
+        const grammarMatch = content.match(/<h3[^>]*>\s*Grammar Focus\s*<\/h3>([\s\S]*?)(?=<h3|$)/i)
+        if (!grammarMatch) return ''
+
+        return `<h3>Grammar Focus</h3>${grammarMatch[1]}`
+    }, [lesson?.grammarHtml, lesson?.contentHtml])
+
+    const hasGrammar = Boolean(effectiveGrammarHtml.trim())
+
+    const startLearning = () => {
+        setStartedLearning(true)
+        if (hasGrammar) {
+            setActiveTab('grammar')
+            return
+        }
+        if (vocabulary.length > 0) {
+            setActiveTab('vocabulary')
+            return
+        }
+        if (questions.length > 0) {
+            setActiveTab('practice')
+        }
+    }
+
     const quizScore = questions.reduce((score, q) => {
         const selected = answers[q.id] || []
         const correctOption = q.options.find((o) => o.isCorrect)
         if (correctOption && selected.includes(correctOption.id)) return score + 1
         return score
     }, 0)
+
+    const requiresVocabulary = vocabulary.length > 0
+    const requiresPractice = questions.length > 0
+    const requiresGrammar = hasGrammar
+    const isLearningReadyToComplete =
+        startedLearning &&
+        visitedTabs.content &&
+        (!requiresGrammar || visitedTabs.grammar) &&
+        (!requiresVocabulary || visitedTabs.vocabulary) &&
+        (!requiresPractice || showResults)
+
+    const userInitials = (user?.fullName || 'HS')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((s) => s[0]?.toUpperCase() || '')
+        .join('')
+
+    const handleContinueLearning = () => {
+        if (!startedLearning) {
+            startLearning()
+            return
+        }
+        if (activeTab === 'content') {
+            if (hasGrammar) {
+                setActiveTab('grammar')
+                return
+            }
+            if (vocabulary.length > 0) {
+                setActiveTab('vocabulary')
+                return
+            }
+            if (questions.length > 0) {
+                setActiveTab('practice')
+            }
+            return
+        }
+        if (activeTab === 'grammar') {
+            if (vocabulary.length > 0) {
+                setActiveTab('vocabulary')
+                return
+            }
+            if (questions.length > 0) {
+                setActiveTab('practice')
+            }
+            return
+        }
+        if (activeTab === 'vocabulary' && questions.length > 0) {
+            setActiveTab('practice')
+        }
+    }
 
     if (loading) {
         return (
@@ -142,70 +236,69 @@ export default function LessonDetailPage() {
     }
 
     return (
-        <div className="p-6 lg:p-8 space-y-8">
-            <Link
-                to="/lessons"
-                className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-primary-500 transition-colors duration-200"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                Quay lại danh sách
-            </Link>
-
-            {/* Hero */}
-            <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative rounded-2xl overflow-hidden px-6 py-8 sm:px-8 sm:py-10 bg-[var(--color-bg-secondary)]"
-            >
-                <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-primary-500/10 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-success-500/10 blur-3xl" />
-                <div className="relative">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text)] mb-3">
-                        {lesson.title}
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                        {lesson.difficultyLevel && (
-                            <Badge
-                                variant={
-                                    lesson.difficultyLevel <= 1 ? 'success' : lesson.difficultyLevel === 2 ? 'info' : lesson.difficultyLevel === 3 ? 'warning' : 'danger'
-                                }
-                            >
-                                Cấp {lesson.difficultyLevel}
-                            </Badge>
-                        )}
-                        {lesson.topicName && <Badge variant="default">{lesson.topicName}</Badge>}
+        <div className="min-h-full bg-[#F8FAFC] dark:bg-slate-950 pb-44">
+            <div className="max-w-5xl mx-auto px-4 md:px-6 py-4 space-y-4">
+                <header className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <Link to="/lessons" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Link>
+                        <h1 className="text-base font-bold truncate max-w-[240px]">{lesson.title}</h1>
                     </div>
-                    <p className="text-sm text-[var(--color-text-secondary)]">
-                        {vocabulary.length > 0 && <span>{vocabulary.length} từ vựng</span>}
-                        {vocabulary.length > 0 && questions.length > 0 && ' • '}
-                        {questions.length > 0 && <span>{questions.length} câu hỏi</span>}
-                    </p>
-                </div>
-            </motion.div>
+                    <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">
+                        {userInitials}
+                    </div>
+                </header>
 
-            {/* Tabs */}
-            <div className="relative flex gap-1 p-1.5 rounded-xl w-fit bg-[var(--color-bg-tertiary)]">
-                {TABS.map((tab) => (
-                    <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
-                        className={`relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 z-10 ${
-                            activeTab === tab.key ? 'text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
-                        }`}
-                    >
-                        {tab.icon}
-                        {tab.label}
-                        {activeTab === tab.key && (
-                            <motion.span
-                                layoutId="lessonTab"
-                                className="absolute inset-0 rounded-lg bg-primary-500"
-                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                style={{ zIndex: -1 }}
-                            />
-                        )}
-                    </button>
-                ))}
-            </div>
+                <motion.section
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-br from-orange-50 to-white dark:from-slate-900 dark:to-slate-900 border border-orange-100 dark:border-slate-800 rounded-3xl p-6 relative overflow-hidden"
+                    style={{ boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)' }}
+                >
+                    <div className="relative z-10">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {lesson.difficultyLevel && (
+                                <span className="px-2 py-1 bg-emerald-500/10 text-emerald-600 text-[10px] font-bold rounded uppercase tracking-wider">
+                                    Cấp {lesson.difficultyLevel}
+                                </span>
+                            )}
+                            {lesson.topicName && (
+                                <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold rounded uppercase tracking-wider">
+                                    {lesson.topicName}
+                                </span>
+                            )}
+                        </div>
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">{lesson.title}</h2>
+                        <p className="text-sm text-slate-500 mb-4">
+                            {vocabulary.length} từ vựng • {questions.length} câu hỏi
+                        </p>
+                        <button
+                            onClick={startLearning}
+                            className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg shadow-orange-200/70 transition-transform active:scale-95"
+                        >
+                            {startedLearning ? 'Tiếp tục học' : 'Bắt đầu học'}
+                        </button>
+                    </div>
+                    <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-orange-500/5 rounded-full" />
+                </motion.section>
+
+                <nav className="flex overflow-x-auto gap-2 py-1">
+                    {TABS.map((tab) => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={`whitespace-nowrap px-5 py-2.5 rounded-2xl text-sm font-semibold flex items-center gap-2 border transition-colors ${
+                                activeTab === tab.key
+                                    ? 'bg-orange-500 text-white border-orange-500'
+                                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-300'
+                            }`}
+                        >
+                            {tab.icon}
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
 
             <AnimatePresence mode="wait">
                 {activeTab === 'content' && (
@@ -215,7 +308,8 @@ export default function LessonDetailPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.2 }}
-                        className="card p-6 lg:p-8"
+                        className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 space-y-6"
+                        style={{ boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)' }}
                     >
                         {lesson.contentHtml ? (
                             <div
@@ -241,6 +335,53 @@ export default function LessonDetailPage() {
                                 </video>
                             </div>
                         )}
+                        <div className="mt-8 pt-6 border-t border-[var(--color-border)] flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
+                                Xong phần lý thuyết, chuyển sang học từ vựng và luyện tập nhé.
+                            </p>
+                            <button
+                                onClick={handleContinueLearning}
+                                className="btn-primary"
+                                disabled={!hasGrammar && vocabulary.length === 0 && questions.length === 0}
+                            >
+                                Tiếp tục học
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+
+                {activeTab === 'grammar' && (
+                    <motion.div
+                        key="grammar"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 space-y-6"
+                        style={{ boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)' }}
+                    >
+                        {hasGrammar ? (
+                            <div
+                                className="prose prose-sm max-w-none text-[var(--color-text)]"
+                                dangerouslySetInnerHTML={{ __html: effectiveGrammarHtml }}
+                            />
+                        ) : (
+                            <p className="text-center py-12 text-[var(--color-text-secondary)]">
+                                Bài học này chưa có nội dung ngữ pháp.
+                            </p>
+                        )}
+                        <div className="mt-8 pt-6 border-t border-[var(--color-border)] flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
+                                Ôn ngữ pháp xong, chuyển sang từ vựng để luyện phản xạ.
+                            </p>
+                            <button
+                                onClick={handleContinueLearning}
+                                className="btn-primary"
+                                disabled={vocabulary.length === 0 && questions.length === 0}
+                            >
+                                Tiếp tục
+                            </button>
+                        </div>
                     </motion.div>
                 )}
 
@@ -299,6 +440,20 @@ export default function LessonDetailPage() {
                                 <p className="text-[var(--color-text-secondary)]">Bài học này chưa có từ vựng.</p>
                             </div>
                         )}
+                        {vocabulary.length > 0 && (
+                            <div className="mt-6 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-sm text-[var(--color-text-secondary)]">
+                                    Đã xem từ vựng? Sang phần luyện tập để kiểm tra lại kiến thức.
+                                </p>
+                                <button
+                                    onClick={handleContinueLearning}
+                                    className="btn-primary"
+                                    disabled={questions.length === 0}
+                                >
+                                    Sang luyện tập
+                                </button>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 
@@ -347,7 +502,7 @@ export default function LessonDetailPage() {
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="card p-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+                                    className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4"
                                 >
                                     {showResults ? (
                                         <>
@@ -390,37 +545,36 @@ export default function LessonDetailPage() {
                 )}
             </AnimatePresence>
 
-            {/* Complete lesson */}
-            <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="card p-6 flex flex-col sm:flex-row items-center justify-between gap-4"
-            >
-                {completed ? (
-                    <div className="flex items-center gap-3 text-success-500 font-medium">
-                        <CheckCircle className="w-6 h-6" />
-                        Bạn đã hoàn thành bài học này!
-                    </div>
-                ) : (
-                    <>
-                        <p className="text-sm text-[var(--color-text-secondary)]">
-                            Đánh dấu hoàn thành khi bạn đã sẵn sàng.
-                        </p>
-                        <button
-                            onClick={handleCompleteLesson}
-                            disabled={completing}
-                            className="btn-primary flex items-center gap-2 disabled:opacity-60"
-                        >
-                            {completing ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <CheckCircle className="w-4 h-4" />
-                            )}
-                            Hoàn thành bài học
-                        </button>
-                    </>
-                )}
-            </motion.div>
+                <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-4 flex items-start gap-3 border border-blue-100/50 dark:border-blue-900/30">
+                    <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
+                    <p className="text-xs text-blue-600 dark:text-blue-300 leading-snug">
+                        Bạn cần bấm "Bắt đầu học" và hoàn tất các bước học trước khi đánh dấu hoàn thành.
+                    </p>
+                </div>
+            </div>
+
+            <footer className="sticky bottom-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 p-4">
+                <div className="max-w-5xl mx-auto flex flex-col gap-3">
+                    <button
+                        onClick={handleContinueLearning}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                        Tiếp tục học
+                    </button>
+                    <button
+                        onClick={handleCompleteLesson}
+                        disabled={completing || !isLearningReadyToComplete || completed}
+                        className={`w-full font-bold py-4 rounded-2xl flex items-center justify-center gap-2 transition-all ${
+                            isLearningReadyToComplete && !completed
+                                ? 'bg-orange-100 text-orange-500 hover:bg-orange-200'
+                                : 'bg-orange-100 text-orange-400 opacity-60 cursor-not-allowed'
+                        }`}
+                    >
+                        {completing ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                        {completed ? 'Đã hoàn thành bài học' : 'Hoàn thành bài học'}
+                    </button>
+                </div>
+            </footer>
         </div>
     )
 }
