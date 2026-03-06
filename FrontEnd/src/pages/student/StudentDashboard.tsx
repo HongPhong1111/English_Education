@@ -88,8 +88,8 @@ export default function StudentDashboard() {
     const wordsMastered = (stats?.completedLessons ?? 0) * 15
     const timeSpentMinutes = (stats?.completedLessons ?? 0) * 15
     const timeSpentDisplay = timeSpentMinutes >= 60
-        ? `${Math.floor(timeSpentMinutes / 60)}h ${timeSpentMinutes % 60}m`
-        : `${timeSpentMinutes}m`
+        ? `${Math.floor(timeSpentMinutes / 60)} giờ ${timeSpentMinutes % 60} phút`
+        : `${timeSpentMinutes} phút`
     const questTasks = dailyQuest?.tasks ?? []
     const questCompletedCount = questTasks.filter((task) => Boolean(task.completed ?? task.isCompleted)).length
     const questTotalCount = questTasks.length
@@ -116,16 +116,17 @@ export default function StudentDashboard() {
                 <div className="mx-auto max-w-7xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-black text-slate-900 dark:text-white">
-                            Welcome back, {user?.fullName?.split(' ')[0] || 'ban'}!
+                            Chào mừng trở lại, {user?.fullName || 'bạn'}!
                         </h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">
-                            Ready to continue your English journey?
+                            Sẵn sàng tiếp tục hành trình học tiếng Anh của bạn chưa?
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
                         <span className="px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-sm font-bold inline-flex items-center gap-1.5">
                             <Flame className="w-4 h-4" />
-                            {user?.streakDays ?? 0} Days
+                            {user?.streakDays ?? 0}
+                            <span className="ml-0.5">Streaks</span>
                         </span>
                         <span className="px-3 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-bold inline-flex items-center gap-1.5">
                             <Gem className="w-4 h-4" />
@@ -145,19 +146,19 @@ export default function StudentDashboard() {
                 <div className="mx-auto max-w-7xl space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="card p-5">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Daily Streak</p>
-                            <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{user?.streakDays ?? 0} <span className="text-lg font-semibold">Days</span></p>
-                            <p className="text-xs mt-2 text-emerald-500 font-semibold">+1 today</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Chuỗi ngày liên tục</p>
+                            <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{user?.streakDays ?? 0} <span className="text-lg font-semibold">Ngày</span></p>
+                            <p className="text-xs mt-2 text-emerald-500 font-semibold">+1 hôm nay</p>
                         </div>
                         <div className="card p-5">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Total XP</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Tổng XP</p>
                             <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{totalCoins.toLocaleString()} <span className="text-lg font-semibold">XP</span></p>
-                            <p className="text-xs mt-2 text-emerald-500 font-semibold">+{Math.max(0, xpNeeded - xpInLevel)} to next level</p>
+                            <p className="text-xs mt-2 text-emerald-500 font-semibold">+{Math.max(0, xpNeeded - xpInLevel)} để lên cấp</p>
                         </div>
                         <div className="card p-5">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Words Mastered</p>
-                            <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{wordsMastered} <span className="text-lg font-semibold">Words</span></p>
-                            <p className="text-xs mt-2 text-slate-500">Study time: {timeSpentDisplay}</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Từ đã học được</p>
+                            <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">{wordsMastered} <span className="text-lg font-semibold">Từ</span></p>
+                            <p className="text-xs mt-2 text-slate-500">Thời gian học: {timeSpentDisplay}</p>
                         </div>
                     </div>
 
@@ -167,12 +168,12 @@ export default function StudentDashboard() {
                                 <div className="absolute right-6 top-6 text-slate-200 dark:text-slate-700">
                                     <Trophy className="w-16 h-16" />
                                 </div>
-                                <p className="text-xs font-black tracking-wide text-primary-500 uppercase">Daily Quest</p>
+                                <p className="text-xs font-black tracking-wide text-primary-500 uppercase">Nhiệm vụ hằng ngày</p>
                                 <h3 className="text-3xl font-black text-slate-900 dark:text-white mt-1">
                                     {primaryQuest ? (primaryQuest.taskType || 'Master the quest').replace(/_/g, ' ') : 'No quest yet'}
                                 </h3>
                                 <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-2xl">
-                                    Hoan thanh quest hom nay de nhan thuong va tang cap nhanh hon.
+                                    Hoàn thành nhiệm vụ hôm nay để nhận thưởng và tăng cấp nhanh hơn.
                                 </p>
                                 <div className="mt-5 h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                                     <div
@@ -182,10 +183,10 @@ export default function StudentDashboard() {
                                 </div>
                                 <div className="mt-4 flex items-center justify-between gap-3">
                                     <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                                        {questCompletedCount} / {questTotalCount} quests completed
+                                        {questCompletedCount} / {questTotalCount} nhiệm vụ hoàn thành
                                     </p>
                                     <Link to="/quests" className="btn-primary inline-flex items-center gap-2">
-                                        Continue Quest
+                                        Tiếp tục nhiệm vụ
                                         <ArrowRight className="w-4 h-4" />
                                     </Link>
                                 </div>
@@ -196,24 +197,24 @@ export default function StudentDashboard() {
                                     <div className="md:w-[40%] min-h-[260px] bg-cover bg-center" style={{ backgroundImage: `url('${NEXT_LESSON_IMAGE}')` }} />
                                     <div className="p-6 md:p-8 flex-1">
                                         <div className="flex items-center gap-2 mb-4">
-                                            <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">Intermediate</span>
+                                            <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">Trung cấp</span>
                                             <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold inline-flex items-center gap-1">
                                                 <Clock className="w-3.5 h-3.5" />
-                                                15 min
+                                                15 phút
                                             </span>
                                         </div>
                                         <h3 className="text-4xl font-black leading-tight text-slate-900 dark:text-white">
                                             {nextLesson.lessonTitle || `Bai hoc #${nextLesson.lessonId}`}
                                         </h3>
                                         <p className="mt-3 text-slate-500 dark:text-slate-400 text-lg">
-                                            Learn with practical examples and quick quizzes.
+                                            Học với các ví dụ thực tế và các bài kiểm tra nhanh.
                                         </p>
                                         <button
                                             onClick={handleContinueLearning}
                                             className="mt-6 rounded-full px-6 py-3 bg-black text-white font-bold inline-flex items-center gap-2 hover:bg-slate-800 transition-colors"
                                         >
                                             <PlayCircle className="w-5 h-5" />
-                                            Start Lesson Now
+                                            Bắt đầu học ngay
                                         </button>
                                     </div>
                                 </div>
@@ -226,7 +227,7 @@ export default function StudentDashboard() {
                                         <BookOpen className="w-8 h-8 text-slate-400" />
                                     </div>
                                     <p className="mt-4 text-slate-500 dark:text-slate-400">
-                                        Chua co bai hoc dang hoc, bat dau ngay!
+                                        Chưa có bài học đang học, bắt đầu ngay!
                                     </p>
                                 </Link>
                             )}
@@ -235,8 +236,8 @@ export default function StudentDashboard() {
                         <div className="xl:col-span-4 space-y-6">
                             <div className="card p-6">
                                 <div className="flex items-center justify-between mb-5">
-                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">Leaderboard</h3>
-                                    <Link to="/leaderboard" className="text-sm font-bold text-primary-500">See all</Link>
+                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">Bảng xếp hạng</h3>
+                                    <Link to="/leaderboard" className="text-sm font-bold text-primary-500">Xem tất cả</Link>
                                 </div>
                                 <div className="space-y-3">
                                     {top5.length > 0 ? top5.slice(0, 4).map((entry, index) => {
@@ -248,32 +249,34 @@ export default function StudentDashboard() {
                                                     {entry.avatarUrl ? <img src={entry.avatarUrl} alt="" className="size-full object-cover" /> : ((entry.fullName || entry.username)?.[0] ?? '?')}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="font-bold truncate text-slate-900 dark:text-white">{isCurrentUser ? 'You' : (entry.fullName || entry.username)}</p>
+                                                    <p className={`font-bold truncate ${isCurrentUser ? 'text-black' : 'text-white'}`}>
+                                                        {isCurrentUser ? 'Bạn' : (entry.fullName || entry.username)}
+                                                    </p>
                                                     <p className="text-xs text-slate-500">{(entry.totalCoins ?? 0).toLocaleString()} XP</p>
                                                 </div>
                                             </div>
                                         )
-                                    }) : <p className="text-sm text-slate-500">Chua co du lieu xep hang.</p>}
+                                    }) : <p className="text-sm text-slate-500">Chưa có dữ liệu xếp hạng.</p>}
                                 </div>
                             </div>
 
                             <div className="rounded-2xl p-6 bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white">
-                                <p className="text-xl font-black">Freeze Streak</p>
-                                <p className="mt-2 text-violet-100">Protect your streak for one day if you miss a lesson.</p>
+                                <p className="text-xl font-black">Bảo vệ chuỗi ngày học</p>
+                                <p className="mt-2 text-violet-100">Bảo vệ chuỗi ngày học của bạn trong một ngày nếu bạn bỏ lỡ một bài học.</p>
                                 <Link to="/quests" className="mt-5 inline-flex items-center justify-center w-full rounded-full bg-white text-violet-700 font-bold py-2.5">
-                                    Buy for 200 Gems
+                                    Mua với 200 Gems
                                 </Link>
                             </div>
 
                             <div className="card p-6">
                                 <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-wider">
                                     <CheckCircle2 className="w-4 h-4 text-amber-500" />
-                                    Word of the day
+                                    Từ vựng mỗi ngày
                                 </div>
                                 <p className="text-3xl font-black mt-2 text-slate-900 dark:text-white">Serendipity</p>
                                 <p className="mt-1 text-primary-500 italic">noun /ˌserənˈdipədi/</p>
                                 <p className="mt-3 text-slate-500 dark:text-slate-400">
-                                    Finding something good without looking for it.
+                                    Tìm thấy điều gì đó tốt đẹp mà không tìm kiếm nó.
                                 </p>
                             </div>
                         </div>
@@ -281,15 +284,15 @@ export default function StudentDashboard() {
 
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Continue Learning</h2>
-                            <Link to="/lessons" className="text-primary-500 font-bold">View all</Link>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Tiếp tục học</h2>
+                            <Link to="/lessons" className="text-primary-500 font-bold">Xem tất cả</Link>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             {learningItems.length > 0 ? (
                                 learningItems.map((item, idx) => (
                                     <Link key={`${item.id}-${idx}`} to={item.lessonId ? `/lessons/${item.lessonId}` : '/lessons'} className="card p-5 hover:border-primary-500/30">
                                         <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{item.lessonTitle || `Bai hoc #${item.lessonId}`}</p>
-                                        <p className="text-xs text-slate-500 mt-1">{item.completionPercentage ?? 0}% completed</p>
+                                        <p className="text-xs text-slate-500 mt-1">{item.completionPercentage ?? 0}% hoàn thành</p>
                                         <div className="mt-3 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                                             <div className="h-full bg-primary-500" style={{ width: `${item.completionPercentage ?? 0}%` }} />
                                         </div>
@@ -297,7 +300,7 @@ export default function StudentDashboard() {
                                 ))
                             ) : (
                                 <div className="card p-5 md:col-span-3 text-center text-sm text-slate-500 dark:text-slate-400">
-                                    Chua co tien do hoc tap de hien thi. Bam vao bai hoc de bat dau.
+                                    Chưa có tiến độ học tập để hiển thị. Bấm vào bài học để bắt đầu.
                                 </div>
                             )}
                         </div>

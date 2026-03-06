@@ -111,13 +111,13 @@ export default function LessonsPage() {
                 iconBg="primary"
             >
                 <div className="relative w-full sm:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                     <input
                         type="text"
                         placeholder="Tìm bài học..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="input-field pl-10"
+                        className="input-field !pl-10"
                     />
                 </div>
             </PageHero>
@@ -223,9 +223,8 @@ export default function LessonsPage() {
                             <button
                                 key={i}
                                 onClick={() => setPage(i)}
-                                className={`min-w-[2.5rem] h-10 px-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                    i === page ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25' : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:bg-primary-500/15 hover:text-primary-500'
-                                }`}
+                                className={`min-w-[2.5rem] h-10 px-2 rounded-xl text-sm font-medium transition-all duration-200 ${i === page ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25' : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:bg-primary-500/15 hover:text-primary-500'
+                                    }`}
                             >
                                 {i + 1}
                             </button>

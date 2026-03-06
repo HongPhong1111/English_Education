@@ -91,7 +91,7 @@ export default function VocabularyPage() {
 
     const playAudio = (url: string) => {
         const audio = new Audio(url)
-        audio.play().catch(() => {})
+        audio.play().catch(() => { })
     }
 
     const handleStudyAgain = async () => {
@@ -138,7 +138,7 @@ export default function VocabularyPage() {
         <div className="p-6 lg:p-8 space-y-8">
             <PageHero
                 title="Từ vựng"
-                subtitle="Ôn tập flashcard và tra cứu từ vựng"
+                subtitle="Ôn tập thẻ học và tra cứu từ vựng"
                 icon={<Layers className="w-7 h-7" />}
                 iconBg="violet"
             >
@@ -148,19 +148,17 @@ export default function VocabularyPage() {
                 >
                     <motion.button
                         onClick={() => setMode('flashcard')}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                            mode === 'flashcard' ? 'bg-violet-500 text-white shadow-md' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${mode === 'flashcard' ? 'bg-violet-500 text-white shadow-md' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+                            }`}
                         whileTap={{ scale: 0.98 }}
                     >
                         <Layers className="w-4 h-4" />
-                        Flashcard
+                        Thẻ học
                     </motion.button>
                     <motion.button
                         onClick={() => setMode('list')}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                            mode === 'list' ? 'bg-violet-500 text-white shadow-md' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 ${mode === 'list' ? 'bg-violet-500 text-white shadow-md' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+                            }`}
                         whileTap={{ scale: 0.98 }}
                     >
                         <List className="w-4 h-4" />
@@ -219,7 +217,7 @@ export default function VocabularyPage() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                                         <Layers className="w-6 h-6 text-primary-500" strokeWidth={2} />
-                                        <span className="text-lg font-bold">Vocabulary Flashcards</span>
+                                        <span className="text-lg font-bold">Thẻ học từ vựng</span>
                                     </div>
                                     <div className="px-3 py-1.5 rounded-full bg-primary-500/10 text-primary-500 text-sm font-bold">
                                         {flashcardIndex + 1} / {flashcards.length} Thẻ
@@ -357,7 +355,7 @@ export default function VocabularyPage() {
                                 placeholder="Tìm từ vựng..."
                                 value={searchTerm}
                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                className="input-field pl-10"
+                                className="input-field !pl-10"
                             />
                         </div>
                     </div>
@@ -372,11 +370,10 @@ export default function VocabularyPage() {
                             <button
                                 key={f.key}
                                 onClick={() => setListFilter(f.key as ListFilter)}
-                                className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
-                                    listFilter === f.key
-                                        ? 'bg-primary-500 text-white border-primary-500'
-                                        : 'bg-white dark:bg-slate-900 text-[var(--color-text-secondary)] border-[var(--color-border)]'
-                                }`}
+                                className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${listFilter === f.key
+                                    ? 'bg-primary-500 text-white border-primary-500'
+                                    : 'bg-white dark:bg-slate-900 text-[var(--color-text-secondary)] border-[var(--color-border)]'
+                                    }`}
                             >
                                 {f.label}
                             </button>

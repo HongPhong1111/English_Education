@@ -52,7 +52,7 @@ const Sidebar = () => {
                     const completed = q?.tasks?.filter((t) => t.completed).length ?? 0
                     setQuestProgress({ completed, total })
                 })
-                .catch(() => {})
+                .catch(() => { })
         }
     }, [isStudent])
 
@@ -127,7 +127,7 @@ const Sidebar = () => {
                             <p className="text-3xl font-black text-slate-900 dark:text-white mb-1">
                                 {user?.streakDays ?? 0} Ngày
                             </p>
-                            <p className="text-sm text-slate-600 dark:text-slate-300">Tiếp tục phát huy, {user?.fullName?.split(' ')[0] || 'bạn'}!</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300">Tiếp tục phát huy, {user?.fullName || 'bạn'}!</p>
                             <div className="mt-4 pt-3 border-t border-amber-200/50 dark:border-amber-700/30">
                                 <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
                                     <span>Nhiệm vụ hôm nay</span>
