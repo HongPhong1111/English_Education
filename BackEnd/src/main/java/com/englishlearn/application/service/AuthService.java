@@ -25,10 +25,10 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 @Service
 @RequiredArgsConstructor
@@ -166,23 +166,25 @@ public class AuthService {
     @Transactional
     public AuthResponse googleLogin(com.englishlearn.presentation.dto.request.GoogleLoginRequest request) {
         try {
-            // Xác thực token Google
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    new NetHttpTransport(), new GsonFactory())
-                    .setAudience(java.util.Collections.singletonList("41159444132-hrtm19jreeauf6344t4osdupfhpg1ckd.apps.googleusercontent.com"))
-                    .build();
+            // Using Access Token to fetch user profile via Google OAuth2 api
+            String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+            com.google.api.client.http.HttpRequestFactory requestFactory = new NetHttpTransport().createRequestFactory();
+            com.google.api.client.http.HttpRequest httpRequest = requestFactory.buildGetRequest(new com.google.api.client.http.GenericUrl(userInfoUrl));
+            httpRequest.getHeaders().setAuthorization("Bearer " + request.getAccessToken());
 
-            // Nếu không check Audience (Client ID) thì có thể tự parse
-            GoogleIdToken idToken = GoogleIdToken.parse(new GsonFactory(), request.getCredential());
-            if (idToken == null) {
-                throw new RuntimeException("Credential Google không hợp lệ");
+            com.google.api.client.http.HttpResponse httpResponse = httpRequest.execute();
+            String jsonResponse = httpResponse.parseAsString();
+            
+            // Parse JSON manually
+            com.google.gson.JsonObject payload = com.google.gson.JsonParser.parseString(jsonResponse).getAsJsonObject();
+
+            if (!payload.has("email")) {
+                throw new RuntimeException("Không tìm thấy Email từ Google Account");
             }
-            // *Lưu ý: trong thực tế bắt buộc phải verifier.verify(request.getCredential())
-
-            GoogleIdToken.Payload payload = idToken.getPayload();
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            String pictureUrl = (String) payload.get("picture");
+            
+            String email = payload.get("email").getAsString();
+            String name = payload.has("name") ? payload.get("name").getAsString() : "Người dùng Google";
+            String pictureUrl = payload.has("picture") ? payload.get("picture").getAsString() : null;
 
             // Tim xem DB đã có user này chưa
             User user = userRepository.findByEmail(email).orElse(null);

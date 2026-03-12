@@ -22,7 +22,7 @@ interface AuthState {
 
     // Actions
     login: (credentials: LoginRequest) => Promise<void>
-    loginWithGoogle: (credential: string) => Promise<void>
+    loginWithGoogle: (accessToken: string) => Promise<void>
     register: (data: RegisterRequest) => Promise<void>
     logout: () => void
     clearError: () => void
@@ -44,14 +44,13 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true, error: null })
                 try {
                     clearExamSessionCache()
-                    const response: AuthResponse = await authApi.login(credentials)
-
-                    // Map AuthResponse to User
+                    const response = await authApi.login(credentials)
+                    
                     const user: User = {
                         id: response.id,
                         username: response.username,
                         email: response.email,
-                        fullName: response.username, // Will be fetched from /users/me
+                        fullName: response.username,
                         roles: response.roles,
                     }
 
@@ -74,11 +73,11 @@ export const useAuthStore = create<AuthState>()(
                 }
             },
 
-            loginWithGoogle: async (credential: string) => {
+            loginWithGoogle: async (accessToken: string) => {
                 set({ isLoading: true, error: null })
                 try {
                     clearExamSessionCache()
-                    const response: AuthResponse = await authApi.loginWithGoogle(credential)
+                    const response = await authApi.loginWithGoogle(accessToken)
 
                     const user: User = {
                         id: response.id,
@@ -90,7 +89,7 @@ export const useAuthStore = create<AuthState>()(
 
                     set({
                         user,
-                        accessToken: response.accessToken,
+                        accessToken: response.accessToken, // use token returned from oauth api
                         refreshToken: response.refreshToken,
                         isAuthenticated: true,
                         isLoading: false,
@@ -127,6 +126,7 @@ export const useAuthStore = create<AuthState>()(
                         isAuthenticated: true,
                         isLoading: false,
                     })
+                    await get().fetchCurrentUser()
                 } catch (error: any) {
                     set({
                         error: error.response?.data?.message || 'Đăng ký thất bại',
