@@ -422,16 +422,56 @@ export default function LessonDetailPage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.05 }}
                                         >
+                                            {/* <FlashCard
+                                            front={
+                                                <div>
+                                                    <p className="text-2xl font-bold mb-2 text-[var(--color-text)]">{vocab.word}</p>
+                                                    {vocab.audioUrl && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                playAudio(vocab.audioUrl!)
+                                                            }}
+                                                            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary-500/15 text-primary-500 hover:bg-primary-500/25 transition-colors"
+                                                        >
+                                                            <Volume2 className="w-3.5 h-3.5" />
+                                                            Phát âm
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            }
+                                            back={
+                                                <div className="space-y-2 text-left">
+                                                    <p className="text-lg font-semibold text-[var(--color-text)]">{vocab.meaning}</p>
+                                                    {vocab.pronunciation && (
+                                                        <p className="text-sm italic text-[var(--color-text-secondary)]">/{vocab.pronunciation}/</p>
+                                                    )}
+                                                    {vocab.exampleSentence && (
+                                                        <p className="text-sm mt-2 text-[var(--color-text-secondary)]">"{vocab.exampleSentence}"</p>
+                                                    )}
+                                                </div>
+                                            }
+                                        /> */}
                                             <FlashCard
                                                 front={
-                                                    <div className='flex flex-col items-center justify-center'>
-                                                        {/* <p className="text-2xl font-bold mb-2 text-[var(--color-text)] text-center flex-col items-center justify-center">{vocab.word }</p> */}
-                                                        <p className="text-2xl font-bold mb-2 text-[var(--color-text)] text-center ">{vocab.word}</p>
+                                                    <div className="flex flex-col items-center justify-center h-full text-center gap-3">
+                                                        {vocab.imageUrl && (
+                                                            <img
+                                                                src={vocab.imageUrl}
+                                                                alt={vocab.word}
+                                                                className="w-32 h-32 object-contain rounded-lg"
+                                                            />
+                                                        )}
+
+                                                        <p className="text-2xl font-bold text-[var(--color-text)]">
+                                                            {vocab.word}
+                                                        </p>
+
                                                         {vocab.audioUrl && (
                                                             <button
                                                                 onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    playAudio(vocab.audioUrl!)
+                                                                    e.stopPropagation();
+                                                                    playAudio(vocab.audioUrl!);
                                                                 }}
                                                                 className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary-500/15 text-primary-500 hover:bg-primary-500/25 transition-colors"
                                                             >
@@ -443,12 +483,20 @@ export default function LessonDetailPage() {
                                                 }
                                                 back={
                                                     <div className="space-y-2 text-left">
-                                                        <p className="text-lg font-semibold text-[var(--color-text)]">{vocab.meaning}</p>
+                                                        <p className="text-lg font-semibold text-[var(--color-text)]">
+                                                            {vocab.meaning}
+                                                        </p>
+
                                                         {vocab.pronunciation && (
-                                                            <p className="text-sm italic text-[var(--color-text-secondary)]">/{vocab.pronunciation}/</p>
+                                                            <p className="text-sm italic text-[var(--color-text-secondary)]">
+                                                                /{vocab.pronunciation}/
+                                                            </p>
                                                         )}
+
                                                         {vocab.exampleSentence && (
-                                                            <p className="text-sm mt-2 text-[var(--color-text-secondary)]">"{vocab.exampleSentence}"</p>
+                                                            <p className="text-sm mt-2 text-[var(--color-text-secondary)]">
+                                                                "{vocab.exampleSentence}"
+                                                            </p>
                                                         )}
                                                     </div>
                                                 }

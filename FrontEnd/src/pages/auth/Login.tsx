@@ -95,7 +95,7 @@ export default function Login() {
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="space-y-2">
                                         <label className="text-slate-900 dark:text-slate-200 text-lg font-bold" htmlFor="username">
-                                            Tên đăng nhập hoặc Email
+                                            Tên đăng nhập
                                         </label>
                                         <div className="relative flex items-center">
                                             <User className="absolute left-4 w-5 h-5 text-primary-500" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
