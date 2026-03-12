@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
     ArrowRight,
     BookOpen,
@@ -19,53 +20,53 @@ import DailyStreakCelebrationOverlay from '../../components/ui/DailyStreakCelebr
 import LevelUpCelebrationNotification from '../../components/ui/LevelUpCelebrationNotification'
 
 type TaskMeta = {
-    title: string
-    description: string
+    titleKey: string
+    descriptionKey: string
     route: string
-    actionLabel: string
+    actionLabelKey: string
     icon: React.ReactNode
     progressColor: string
     rewardLabel: string
 }
 
-const getTaskMeta = (taskType: string): TaskMeta => {
+const getTaskMeta = (taskType: string, t: (key: string) => string): TaskMeta => {
     switch (taskType) {
         case 'LEARN_VOCAB':
             return {
-                title: 'Nhiệm vụ Từ vựng',
-                description: 'Học thêm từ mới trong ngày.',
+                titleKey: 'quests.vocabQuest',
+                descriptionKey: 'quests.learnNewWords',
                 route: '/vocabulary',
-                actionLabel: 'Đi đến Từ vựng',
+                actionLabelKey: 'sidebar.vocabulary',
                 icon: <BookOpen className="w-5 h-5" />,
                 progressColor: 'from-sky-500 to-blue-600',
                 rewardLabel: '+10 Xu',
             }
         case 'COMPLETE_LESSON':
             return {
-                title: 'Hoàn thành bài học',
-                description: 'Hoàn thành ít nhất 1 bài học.',
+                titleKey: 'quests.completeLesson',
+                descriptionKey: 'quests.completeAtLeastOne',
                 route: '/lessons',
-                actionLabel: 'Đi đến Bài học',
+                actionLabelKey: 'sidebar.lessons',
                 icon: <FileText className="w-5 h-5" />,
                 progressColor: 'from-violet-500 to-fuchsia-600',
                 rewardLabel: '+25 Xu',
             }
         case 'SCORE_EXAM':
             return {
-                title: 'Chinh phục bài thi',
-                description: 'Đạt điểm mục tiêu trong bài thi.',
+                titleKey: 'quests.conquerExam',
+                descriptionKey: 'quests.achieveTargetScore',
                 route: '/exams',
-                actionLabel: 'Đi đến Bài thi',
+                actionLabelKey: 'sidebar.exams',
                 icon: <Target className="w-5 h-5" />,
                 progressColor: 'from-amber-500 to-orange-600',
                 rewardLabel: '+50 Xu',
             }
         default:
             return {
-                title: 'Nhiệm vụ trong ngày',
-                description: 'Hoàn thành nhiệm vụ để nhận thưởng.',
+                titleKey: 'quests.dailyQuest',
+                descriptionKey: 'quests.completeQuestForReward',
                 route: '/dashboard',
-                actionLabel: 'Xem Dashboard',
+                actionLabelKey: 'sidebar.dashboard',
                 icon: <Sparkles className="w-5 h-5" />,
                 progressColor: 'from-emerald-500 to-teal-600',
                 rewardLabel: '+5 Xu',
@@ -78,6 +79,7 @@ const isTaskDone = (task: QuestTask) => Boolean(task.completed ?? task.isComplet
 const isQuestDone = (quest: DailyQuestResponse) => Boolean(quest.completed ?? quest.isCompleted)
 
 export default function DailyQuestsPage() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const user = useAuthStore((s) => s.user)
     const setUser = useAuthStore((s) => s.setUser)
@@ -114,7 +116,7 @@ export default function DailyQuestsPage() {
                 setHistory(historyResult.value || [])
             }
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Không thể tải nhiệm vụ hôm nay')
+            setError(t('common.error'))
         } finally {
             setLoading(false)
         }
@@ -122,7 +124,7 @@ export default function DailyQuestsPage() {
 
     useEffect(() => {
         void fetchData()
-    }, [])
+    }, [t])
 
     const summary = useMemo(() => {
         if (!quest?.tasks?.length) {
@@ -163,7 +165,7 @@ export default function DailyQuestsPage() {
                 setShowStreakOverlay(true)
             }
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Cập nhật tiến độ thất bại')
+            setError(t('common.error'))
         } finally {
             setUpdatingTaskId(null)
         }
@@ -185,7 +187,7 @@ export default function DailyQuestsPage() {
                 setShowStreakOverlay(true)
             }
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Không thể đánh dấu hoàn thành task')
+            setError(t('common.error'))
         } finally {
             setUpdatingTaskId(null)
         }
@@ -221,7 +223,7 @@ export default function DailyQuestsPage() {
                 }
             }
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Không thể hoàn thành quest hôm nay')
+            setError(t('common.error'))
         } finally {
             setCompletingQuest(false)
         }
@@ -240,8 +242,8 @@ export default function DailyQuestsPage() {
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <EmptyState
                     icon={<Target className="w-8 h-8" />}
-                    title="Không tải được nhiệm vụ hôm nay"
-                    description={error || 'Vui lòng thử lại sau ít phút.'}
+                    title={t('quests.cantLoadQuests')}
+                    description={error || t('quests.tryAgainLater')}
                 />
             </div>
         )
@@ -282,17 +284,17 @@ export default function DailyQuestsPage() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h1 className="text-3xl md:text-4xl font-black" style={{ color: 'var(--color-text)' }}>
-                                    Nhiệm vụ hàng ngày
+                                    {t('quests.title')}
                                 </h1>
                                 <Sparkles className="w-7 h-7" style={{ color: 'var(--color-primary)' }} />
                             </div>
                             <p className="mt-2 text-sm md:text-base max-w-xl" style={{ color: 'var(--color-text-secondary)' }}>
-                                Hoàn thành tất cả nhiệm vụ trong ngày để mở khóa thưởng thêm và giữ chuỗi học tập.
+                                {t('quests.subtitle')}
                             </p>
                         </div>
                         <div className="rounded-2xl border px-5 py-4 min-w-[210px]" style={{ background: 'var(--color-bg-secondary)', borderColor: 'var(--color-border)' }}>
                             <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-                                Làm mới trong
+                                {t('quests.refreshIn')}
                             </p>
                             <p className="mt-1 text-2xl font-black flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
                                 <Clock3 className="w-5 h-5" />
@@ -306,10 +308,10 @@ export default function DailyQuestsPage() {
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
                         <div>
                             <h2 className="text-xl font-black" style={{ color: 'var(--color-text)' }}>
-                                Tiến độ mục tiêu
+                                {t('quests.goalProgress')}
                             </h2>
                             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                                Còn {summary.remain} nhiệm vụ nữa để hoàn thành mục tiêu hôm nay.
+                                {t('quests.moreQuestsComplete', { remain: summary.remain })}
                             </p>
                         </div>
                         <span className="text-3xl font-black" style={{ color: 'var(--color-primary)' }}>
@@ -328,7 +330,7 @@ export default function DailyQuestsPage() {
                             disabled={summary.remain > 0 || questCompleted || completingQuest}
                             className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {completingQuest ? 'Đang xử lý...' : questCompleted ? 'Đã hoàn thành nhiệm vụ hôm nay' : 'Nhận thưởng quest hôm nay'}
+                            {completingQuest ? t('quests.processing') : questCompleted ? t('quests.claimedToday') : t('quests.claimReward')}
                         </button>
                         {error && (
                             <span className="text-sm text-red-500">{error}</span>
@@ -338,7 +340,7 @@ export default function DailyQuestsPage() {
 
                 <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {quest.tasks?.map((task) => {
-                        const meta = getTaskMeta(task.taskType)
+                        const meta = getTaskMeta(task.taskType, t)
                         const current = getTaskCurrent(task)
                         const done = isTaskDone(task)
                         const percent = task.targetCount > 0 ? Math.min((current / task.targetCount) * 100, 100) : 0
@@ -360,21 +362,21 @@ export default function DailyQuestsPage() {
                                                     : 'bg-violet-100 text-violet-700'
                                                 }`}
                                         >
-                                            {done ? 'Đã hoàn thành' : 'Đang thực hiện'}
+                                            {done ? t('quests.completed') : t('quests.inProgress')}
                                         </span>
                                     </div>
                                 </div>
 
                                 <h3 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-text)' }}>
-                                    {meta.title}
+                                    {t(meta.titleKey)}
                                 </h3>
                                 <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                                    {meta.description}
+                                    {t(meta.descriptionKey)}
                                 </p>
 
                                 <div className="mt-4">
                                     <div className="flex items-center justify-between text-xs font-semibold mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                                        <span>Tiến độ</span>
+                                        <span>{t('quests.progress')}</span>
                                         <span>{Math.min(current, task.targetCount)}/{task.targetCount}</span>
                                     </div>
                                     <div className="h-3 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-tertiary)' }}>
@@ -391,7 +393,7 @@ export default function DailyQuestsPage() {
                                         className="btn-primary w-full text-sm rounded-xl"
                                     >
                                         <span className="inline-flex items-center gap-1.5">
-                                            {meta.actionLabel}
+                                            {t(meta.actionLabelKey)}
                                             <ArrowRight className="w-4 h-4" />
                                         </span>
                                     </button>
@@ -402,7 +404,7 @@ export default function DailyQuestsPage() {
                                         >
                                             <span className="inline-flex items-center gap-1.5">
                                                 <CheckCircle2 className="w-4 h-4" />
-                                                Đã nhận thưởng nhiệm vụ
+                                                {t('quests.questRewardReceived')}
                                             </span>
                                         </button>
                                     ) : (
@@ -412,14 +414,14 @@ export default function DailyQuestsPage() {
                                                 disabled={taskBusy}
                                                 className="btn-secondary w-full text-sm rounded-xl"
                                             >
-                                                {taskBusy ? 'Đang cập nhật...' : '+1 tiến độ'}
+                                                {taskBusy ? t('quests.updating') : t('quests.updateProgress')}
                                             </button>
                                             <button
                                                 onClick={() => handleMarkCompleted(task)}
                                                 disabled={taskBusy}
                                                 className="btn-secondary w-full text-sm rounded-xl"
                                             >
-                                                Hoàn tất
+                                                {t('quests.markComplete')}
                                             </button>
                                         </div>
                                     )}
@@ -432,11 +434,11 @@ export default function DailyQuestsPage() {
                 <section className="card p-6 md:p-7">
                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
                         <Flame className="w-5 h-5 text-orange-500" />
-                        Lịch sử nhiệm vụ gần đây
+                        {t('quests.dailyQuestHistory')}
                     </h3>
                     {history.length === 0 ? (
                         <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                            Chưa có dữ liệu lịch sử.
+                            {t('quests.noHistory')}
                         </p>
                     ) : (
                         <div className="space-y-2">
@@ -453,7 +455,7 @@ export default function DailyQuestsPage() {
                                         className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isQuestDone(item) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'
                                             }`}
                                     >
-                                        {isQuestDone(item) ? 'Đã hoàn thành' : 'Chưa hoàn thành'}
+                                        {isQuestDone(item) ? t('quests.completed') : t('quests.notCompleted')}
                                     </span>
                                 </div>
                             ))}
@@ -464,3 +466,4 @@ export default function DailyQuestsPage() {
         </>
     )
 }
+

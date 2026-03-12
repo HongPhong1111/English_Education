@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useRole } from '../../hooks/useRole'
 import { useAuthStore } from '../../store/authStore'
 import { questApi } from '../../services/api/questApi'
@@ -13,32 +14,33 @@ import type { LucideIcon } from 'lucide-react'
 
 interface MenuItem {
     icon: LucideIcon
-    label: string
+    labelKey: string
     path: string
 }
 
 const studentMenuItems: MenuItem[] = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: ClipboardList, label: 'Nhiệm vụ ngày', path: '/quests' },
-    { icon: BookOpen, label: 'Bài học', path: '/lessons' },
-    { icon: Languages, label: 'Từ vựng', path: '/vocabulary' },
-    { icon: FileText, label: 'Bài thi', path: '/exams' },
-    { icon: Trophy, label: 'Xếp hạng', path: '/leaderboard' },
-    { icon: BookMarked, label: 'Sổ lỗi', path: '/mistakes' },
-    { icon: Award, label: 'Huy hiệu', path: '/badges' },
+    { icon: LayoutDashboard, labelKey: 'sidebar.dashboard', path: '/dashboard' },
+    { icon: ClipboardList, labelKey: 'sidebar.dailyQuests', path: '/quests' },
+    { icon: BookOpen, labelKey: 'sidebar.lessons', path: '/lessons' },
+    { icon: Languages, labelKey: 'sidebar.vocabulary', path: '/vocabulary' },
+    { icon: FileText, labelKey: 'sidebar.exams', path: '/exams' },
+    { icon: Trophy, labelKey: 'sidebar.leaderboard', path: '/leaderboard' },
+    { icon: BookMarked, labelKey: 'sidebar.mistakeNotebook', path: '/mistakes' },
+    { icon: Award, labelKey: 'sidebar.badges', path: '/badges' },
 ]
 
 const teacherMenuItems: MenuItem[] = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/teacher/dashboard' },
-    { icon: GraduationCap, label: 'Quản lý lớp', path: '/teacher/management' },
-    { icon: BookOpen, label: 'Bài học', path: '/teacher/lessons' },
-    { icon: HelpCircle, label: 'Câu hỏi', path: '/teacher/questions' },
-    { icon: Languages, label: 'Từ vựng', path: '/teacher/vocabulary' },
-    { icon: FileText, label: 'Bài thi', path: '/teacher/exams' },
-    { icon: BarChart3, label: 'Tiến độ HS', path: '/teacher/progress' },
+    { icon: LayoutDashboard, labelKey: 'sidebar.dashboard', path: '/teacher/dashboard' },
+    { icon: GraduationCap, labelKey: 'sidebar.classManagement', path: '/teacher/management' },
+    { icon: BookOpen, labelKey: 'sidebar.lessons', path: '/teacher/lessons' },
+    { icon: HelpCircle, labelKey: 'sidebar.questions', path: '/teacher/questions' },
+    { icon: Languages, labelKey: 'sidebar.vocabulary', path: '/teacher/vocabulary' },
+    { icon: FileText, labelKey: 'sidebar.exams', path: '/teacher/exams' },
+    { icon: BarChart3, labelKey: 'sidebar.progress', path: '/teacher/progress' },
 ]
 
 const Sidebar = () => {
+    const { t } = useTranslation()
     const location = useLocation()
     const { isTeacher, isStudent } = useRole()
     const user = useAuthStore((s) => s.user)
@@ -69,7 +71,7 @@ const Sidebar = () => {
                 <div className="flex flex-col">
                     <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-none">EnglishLearn</h1>
                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                        {isStudent ? 'Student Portal' : 'Teacher Portal'}
+                        {isStudent ? t('sidebar.studentPortal') : t('sidebar.teacherPortal')}
                     </span>
                 </div>
             </div>
@@ -89,7 +91,7 @@ const Sidebar = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.fullName || user.username}</p>
-                            <p className="text-xs font-medium text-primary-500">Level {userLevel} Explorer</p>
+                            <p className="text-xs font-medium text-primary-500">{t('dashboard.level')} {userLevel} {t('dashboard.explorer')}</p>
                         </div>
                     </div>
                 </div>
@@ -111,7 +113,7 @@ const Sidebar = () => {
                                 }`}
                         >
                             <Icon className="w-5 h-5 shrink-0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                            <span className={`text-sm font-medium ${isActive ? 'font-semibold' : ''}`}>{item.label}</span>
+                            <span className={`text-sm font-medium ${isActive ? 'font-semibold' : ''}`}>{t(item.labelKey)}</span>
                         </Link>
                     )
                 })}
@@ -122,15 +124,15 @@ const Sidebar = () => {
                         <div className="rounded-2xl p-5 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/50 dark:border-amber-700/30 shadow-sm">
                             <div className="flex items-center gap-2 mb-2">
                                 <Flame className="w-5 h-5 text-amber-500" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                                <span className="font-bold text-slate-900 dark:text-white text-sm">Chuỗi ngày học</span>
+                                <span className="font-bold text-slate-900 dark:text-white text-sm">{t('sidebar.dailyStreak')}</span>
                             </div>
                             <p className="text-3xl font-black text-slate-900 dark:text-white mb-1">
-                                {user?.streakDays ?? 0} Ngày
+                                {user?.streakDays ?? 0} {t('dashboard.streaks')}
                             </p>
-                            <p className="text-sm text-slate-600 dark:text-slate-300">Tiếp tục phát huy, {user?.fullName || 'bạn'}!</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300">{t('sidebar.todaysQuests')}, {user?.fullName || 'you'}!</p>
                             <div className="mt-4 pt-3 border-t border-amber-200/50 dark:border-amber-700/30">
                                 <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-                                    <span>Nhiệm vụ hôm nay</span>
+                                    <span>{t('sidebar.todaysQuests')}</span>
                                     <span>{questProgress.completed}/{questProgress.total}</span>
                                 </div>
                                 <div className="w-full rounded-full h-2 bg-slate-200 dark:bg-slate-700 overflow-hidden">
@@ -154,7 +156,7 @@ const Sidebar = () => {
                         }`}
                 >
                     <Settings className="w-5 h-5 shrink-0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                    <span className="text-sm font-medium">Cài đặt</span>
+                    <span className="text-sm font-medium">{t('sidebar.settings')}</span>
                 </Link>
             </nav>
         </aside>

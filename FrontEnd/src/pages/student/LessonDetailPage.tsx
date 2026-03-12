@@ -24,11 +24,11 @@ import Badge from '../../components/ui/Badge'
 
 type TabKey = 'content' | 'grammar' | 'vocabulary' | 'practice'
 
-const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'content', label: 'Nội dung', icon: <BookOpen className="w-4 h-4" /> },
-    { key: 'grammar', label: 'Ngữ pháp', icon: <FileText className="w-4 h-4" /> },
-    { key: 'vocabulary', label: 'Từ vựng', icon: <Languages className="w-4 h-4" /> },
-    { key: 'practice', label: 'Luyện tập', icon: <Dumbbell className="w-4 h-4" /> },
+const getTabs = (t: (key: string, opts?: any) => string): { key: TabKey; label: string; icon: React.ReactNode }[] => [
+    { key: 'content', label: t('lessons.tabContent'), icon: <BookOpen className="w-4 h-4" /> },
+    { key: 'grammar', label: t('lessons.tabGrammar'), icon: <FileText className="w-4 h-4" /> },
+    { key: 'vocabulary', label: t('lessons.tabVocabulary'), icon: <Languages className="w-4 h-4" /> },
+    { key: 'practice', label: t('lessons.tabPractice'), icon: <Dumbbell className="w-4 h-4" /> },
 ]
 
 function fireConfetti() {
@@ -50,6 +50,7 @@ export default function LessonDetailPage() {
     const [activeTab, setActiveTab] = useState<TabKey>('content')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const tabs = getTabs(t)
 
     const [answers, setAnswers] = useState<Record<number, number[]>>({})
     const [showResults, setShowResults] = useState(false)
@@ -77,12 +78,12 @@ export default function LessonDetailPage() {
                     questionApi.getByLesson(lessonId),
                 ])
                 if (lessonData.status === 'fulfilled') setLesson(lessonData.value)
-                else setError('Không thể tải bài học này.')
+                else setError(t('lessons.loadError'))
                 if (vocabData.status === 'fulfilled') setVocabulary(vocabData.value)
                 if (questionData.status === 'fulfilled') setQuestions(questionData.value)
             } catch (err) {
                 console.error('Failed to load lesson:', err)
-                setError('Đã xảy ra lỗi. Vui lòng thử lại.')
+                setError(t('lessons.networkError'))
             } finally {
                 setLoading(false)
             }
@@ -512,25 +513,25 @@ export default function LessonDetailPage() {
                                                 </p>
                                                 <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                                                     {quizScore === questions.length
-                                                        ? 'Xuất sắc! Bạn đã trả lời đúng tất cả!'
-                                                        : 'Ôn lại và thử lại nhé!'}
+                                                        ? t('lessons.perfectScore')
+                                                        : t('lessons.reviewAndTryAgain')}
                                                 </p>
                                             </div>
                                             <button onClick={handleResetQuiz} className="btn-secondary">
-                                                Làm lại
+                                                {t('lessons.retryQuiz')}
                                             </button>
                                         </>
                                     ) : (
                                         <>
                                             <p className="text-sm text-[var(--color-text-secondary)]">
-                                                Đã trả lời {Object.keys(answers).length}/{questions.length} câu
+                                                {t('lessons.answeredCount', { answered: Object.keys(answers).length, total: questions.length })}
                                             </p>
                                             <button
                                                 onClick={handleSubmitQuiz}
                                                 disabled={Object.keys(answers).length === 0}
                                                 className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
                                             >
-                                                Nộp bài
+                                                {t('lessons.submitQuiz')}
                                             </button>
                                         </>
                                     )}
@@ -548,7 +549,7 @@ export default function LessonDetailPage() {
                 <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-4 flex items-start gap-3 border border-blue-100/50 dark:border-blue-900/30">
                     <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
                     <p className="text-xs text-blue-600 dark:text-blue-300 leading-snug">
-                        Bạn cần bấm "Bắt đầu học" và hoàn tất các bước học trước khi đánh dấu hoàn thành.
+                        {t('lessons.completeWarning')}
                     </p>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
     Layers,
     List,
@@ -26,6 +27,7 @@ type ViewMode = 'flashcard' | 'list'
 type ListFilter = 'all' | 'audio' | 'example' | 'image'
 
 export default function VocabularyPage() {
+    const { t } = useTranslation()
     const user = useAuthStore((s) => s.user)
     const [mode, setMode] = useState<ViewMode>('flashcard')
 
@@ -52,11 +54,11 @@ export default function VocabularyPage() {
             setMistakeAdded(new Set())
         } catch (err) {
             console.error('Failed to fetch flashcards:', err)
-            setFlashcardError('Không thể tải flashcard. Vui lòng thử lại.')
+            setFlashcardError(t('common.error'))
         } finally {
             setFlashcardLoading(false)
         }
-    }, [])
+    }, [t])
 
     const fetchVocabList = useCallback(async (keyword: string) => {
         setListLoading(true)
@@ -119,7 +121,6 @@ export default function VocabularyPage() {
         if (flashcardIndex < flashcards.length - 1) {
             setFlashcardIndex((i) => i + 1)
         } else {
-            // Hết thẻ - có thể shuffle để học lại
             fetchFlashcards()
         }
     }
@@ -137,8 +138,8 @@ export default function VocabularyPage() {
     return (
         <div className="p-6 lg:p-8 space-y-8">
             <PageHero
-                title="Từ vựng"
-                subtitle="Ôn tập thẻ học và tra cứu từ vựng"
+                title={t('vocabulary.title')}
+                subtitle={t('vocabulary.subtitle')}
                 icon={<Layers className="w-7 h-7" />}
                 iconBg="violet"
             >
@@ -153,7 +154,7 @@ export default function VocabularyPage() {
                         whileTap={{ scale: 0.98 }}
                     >
                         <Layers className="w-4 h-4" />
-                        Thẻ học
+                        {t('vocabulary.flashcards')}
                     </motion.button>
                     <motion.button
                         onClick={() => setMode('list')}
@@ -162,7 +163,7 @@ export default function VocabularyPage() {
                         whileTap={{ scale: 0.98 }}
                     >
                         <List className="w-4 h-4" />
-                        Danh sách
+                        {t('vocabulary.wordList')}
                     </motion.button>
                 </div>
             </PageHero>
@@ -191,7 +192,7 @@ export default function VocabularyPage() {
                             <AlertCircle className="w-14 h-14 text-red-400 mb-4" />
                             <p className="font-medium text-[var(--color-text)] mb-4">{flashcardError}</p>
                             <button onClick={fetchFlashcards} className="btn-primary">
-                                Thử lại
+                                {t('common.retry')}
                             </button>
                         </motion.div>
                     ) : flashcards.length === 0 ? (
@@ -202,7 +203,7 @@ export default function VocabularyPage() {
                         >
                             <Sparkles className="w-12 h-12 text-violet-500/60 mx-auto mb-4" />
                             <p className="text-[var(--color-text-secondary)]">
-                                Chưa có từ vựng nào. Hãy học bài để mở khóa từ vựng!
+                                {t('vocabulary.noVocabYet')}
                             </p>
                         </motion.div>
                     ) : (
@@ -212,15 +213,14 @@ export default function VocabularyPage() {
                             transition={{ duration: 0.3 }}
                             className="max-w-[800px] mx-auto flex flex-col gap-6"
                         >
-                            {/* Progress Header - stitch variant 2 */}
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                                         <Layers className="w-6 h-6 text-primary-500" strokeWidth={2} />
-                                        <span className="text-lg font-bold">Thẻ học từ vựng</span>
+                                        <span className="text-lg font-bold">{t('vocabulary.flashcards')}</span>
                                     </div>
                                     <div className="px-3 py-1.5 rounded-full bg-primary-500/10 text-primary-500 text-sm font-bold">
-                                        {flashcardIndex + 1} / {flashcards.length} Thẻ
+                                        {flashcardIndex + 1} / {flashcards.length} {t('vocabulary.cards')}
                                     </div>
                                 </div>
                                 <div className="relative w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -233,7 +233,6 @@ export default function VocabularyPage() {
                                 </div>
                             </div>
 
-                            {/* Flashcard - stitch layout: 65% image, 35% word */}
                             <div className="flex-1 min-h-[500px] flex flex-col items-center justify-center perspective-[1000px]">
                                 <AnimatePresence mode="wait">
                                     {currentCard && (
@@ -264,7 +263,7 @@ export default function VocabularyPage() {
                                                                         playAudio(currentCard.audioUrl!)
                                                                     }}
                                                                     className="absolute top-4 right-4 bg-white/90 dark:bg-black/70 backdrop-blur-sm p-2.5 rounded-lg shadow-sm hover:scale-110 transition-transform"
-                                                                    title="Phát âm"
+                                                                    title={t('vocabulary.listen')}
                                                                 >
                                                                     <Volume2 className="w-5 h-5 text-primary-500" strokeWidth={2} />
                                                                 </button>
@@ -275,7 +274,7 @@ export default function VocabularyPage() {
                                                                 {currentCard.word}
                                                             </h3>
                                                             <p className="text-slate-400 dark:text-slate-500 font-medium text-sm">
-                                                                Chạm để lật thẻ
+                                                                {t('vocabulary.tapToFlip')}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -292,7 +291,7 @@ export default function VocabularyPage() {
                                                         )}
                                                         {currentCard.exampleSentence && (
                                                             <p className="text-sm mt-3 text-[var(--color-text-secondary)]">
-                                                                &quot;{currentCard.exampleSentence}&quot;
+                                                                "{currentCard.exampleSentence}"
                                                             </p>
                                                         )}
                                                     </div>
@@ -303,10 +302,9 @@ export default function VocabularyPage() {
                                 </AnimatePresence>
                             </div>
 
-                            {/* Action Controls - stitch variant 2 */}
                             <div className="flex flex-col items-center gap-6 pb-8">
                                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                                    Bạn đã trả lời đúng chưa?
+                                    {t('vocabulary.didYouKnow')}
                                 </p>
                                 <div className="flex flex-col sm:flex-row w-full gap-4 max-w-[600px]">
                                     <motion.button
@@ -317,7 +315,7 @@ export default function VocabularyPage() {
                                         whileTap={{ scale: 0.98 }}
                                     >
                                         <RotateCcw className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2} />
-                                        Học lại
+                                        {t('vocabulary.studyAgain')}
                                     </motion.button>
                                     <motion.button
                                         onClick={handleIKnowThis}
@@ -326,7 +324,7 @@ export default function VocabularyPage() {
                                         whileTap={{ scale: 0.98 }}
                                     >
                                         <CheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                                        Tôi biết từ này
+                                        {t('vocabulary.iKnowThis')}
                                     </motion.button>
                                 </div>
                             </div>
@@ -343,16 +341,16 @@ export default function VocabularyPage() {
                 >
                     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <div className="flex flex-col gap-1">
-                            <h2 className="text-2xl md:text-3xl font-bold text-[var(--color-text)]">Thư viện từ vựng</h2>
+                            <h2 className="text-2xl md:text-3xl font-bold text-[var(--color-text)]">{t('vocabulary.vocabularyLibrary')}</h2>
                             <p className="text-sm text-[var(--color-text-secondary)]">
-                                Khám phá từ mới, nghe phát âm và thêm vào sổ lỗi khi cần ôn lại.
+                                {t('vocabulary.discoverNew')}
                             </p>
                         </div>
                         <div className="relative w-full md:w-96">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                             <input
                                 type="text"
-                                placeholder="Tìm từ vựng..."
+                                placeholder={t('vocabulary.searchPlaceholder')}
                                 value={searchTerm}
                                 onChange={(e) => handleSearchChange(e.target.value)}
                                 className="input-field !pl-10"
@@ -362,10 +360,10 @@ export default function VocabularyPage() {
 
                     <div className="flex gap-2 overflow-x-auto pb-1">
                         {[
-                            { key: 'all', label: 'Tất cả' },
-                            { key: 'audio', label: 'Có audio' },
-                            { key: 'example', label: 'Có ví dụ' },
-                            { key: 'image', label: 'Có hình ảnh' },
+                            { key: 'all', label: t('vocabulary.all') },
+                            { key: 'audio', label: t('vocabulary.hasAudio') },
+                            { key: 'example', label: t('vocabulary.hasExample') },
+                            { key: 'image', label: t('vocabulary.hasImage') },
                         ].map((f) => (
                             <button
                                 key={f.key}
@@ -409,13 +407,13 @@ export default function VocabularyPage() {
                                     </div>
                                     <div className="p-4 flex flex-col gap-3 flex-1">
                                         <p className="text-sm font-medium text-[var(--color-text)] line-clamp-2 min-h-[2.5rem]">
-                                            {vocab.meaning || 'Chưa có nghĩa'}
+                                            {vocab.meaning || t('vocabulary.noMeaning')}
                                         </p>
                                         <p className="text-xs italic text-[var(--color-text-secondary)] min-h-[1rem]">
                                             {vocab.pronunciation ? `/${vocab.pronunciation}/` : '—'}
                                         </p>
                                         <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2 min-h-[2rem]">
-                                            {vocab.exampleSentence || 'Chưa có ví dụ'}
+                                            {vocab.exampleSentence || t('vocabulary.noExample')}
                                         </p>
 
                                         <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
@@ -425,7 +423,7 @@ export default function VocabularyPage() {
                                                 className="flex items-center justify-center gap-1 h-10 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 text-primary-500 font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                             >
                                                 <Headphones className="w-4 h-4" />
-                                                Nghe
+                                                {t('vocabulary.listen')}
                                             </button>
                                             <button
                                                 onClick={async () => {
@@ -438,7 +436,7 @@ export default function VocabularyPage() {
                                                 className="flex items-center justify-center gap-1 h-10 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-semibold text-sm transition-colors"
                                             >
                                                 <BookOpen className="w-4 h-4" />
-                                                Ôn lại
+                                                {t('vocabulary.reviewAgain')}
                                             </button>
                                         </div>
                                     </div>
@@ -449,8 +447,8 @@ export default function VocabularyPage() {
                         <div className="card p-12 text-center rounded-2xl">
                             <p className="text-[var(--color-text-secondary)]">
                                 {searchTerm
-                                    ? `Không tìm thấy từ cho "${searchTerm}" theo bộ lọc hiện tại.`
-                                    : 'Chưa có từ vựng để hiển thị.'}
+                                    ? t('vocabulary.noMatchFor', { search: searchTerm })
+                                    : t('vocabulary.noVocabToDisplay')}
                             </p>
                         </div>
                     )}
@@ -459,3 +457,4 @@ export default function VocabularyPage() {
         </div>
     )
 }
+
