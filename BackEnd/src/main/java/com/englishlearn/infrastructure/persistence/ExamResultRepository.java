@@ -40,14 +40,16 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
     List<ExamResult> findTopScoresByExamId(@Param("examId") Long examId);
 
     /**
-     * Lấy phiên làm bài đang mở gần nhất (chưa nộp) của một học sinh cho một bài thi.
+     * Lấy phiên làm bài đang mở gần nhất (chưa nộp) của một học sinh cho một bài
+     * thi.
      */
     Optional<ExamResult> findTopByExamIdAndStudentIdAndSubmittedAtIsNullOrderByIdDesc(Long examId, Long studentId);
 
     /**
      * Lấy kết quả đã nộp mới nhất của một học sinh cho một bài thi.
      */
-    Optional<ExamResult> findTopByExamIdAndStudentIdAndSubmittedAtIsNotNullOrderBySubmittedAtDescIdDesc(Long examId, Long studentId);
+    Optional<ExamResult> findTopByExamIdAndStudentIdAndSubmittedAtIsNotNullOrderBySubmittedAtDescIdDesc(Long examId,
+            Long studentId);
 
     /**
      * Lấy tất cả kết quả của một bài thi, sắp xếp theo điểm giảm dần
@@ -69,4 +71,9 @@ public interface ExamResultRepository extends JpaRepository<ExamResult, Long> {
      */
     @Query("SELECT er FROM ExamResult er WHERE er.exam.classRoom.school.id = :schoolId AND er.submittedAt IS NOT NULL")
     Page<ExamResult> findBySchoolId(@Param("schoolId") Long schoolId, Pageable pageable);
+
+    @Query("SELECT AVG(er.score) FROM ExamResult er WHERE er.submittedAt IS NOT NULL")
+    Double averageScoreAll();
+
+    long countBySubmittedAtIsNotNull();
 }

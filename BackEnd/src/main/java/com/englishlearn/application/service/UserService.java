@@ -2,6 +2,8 @@ package com.englishlearn.application.service;
 
 import com.englishlearn.application.dto.request.ChangePasswordRequest;
 import com.englishlearn.application.dto.request.CreateUserRequest;
+import com.englishlearn.application.dto.request.UpdateUserRequest;
+import com.englishlearn.application.dto.response.AdminUserStatsResponse;
 import com.englishlearn.application.dto.response.UserResponse;
 import com.englishlearn.domain.entity.Role;
 import com.englishlearn.domain.entity.User;
@@ -53,7 +55,7 @@ public class UserService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateResourceException("Tài khoản", "username", request.getUsername());
         }
-        
+
         // Validate email uniqueness
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Tài khoản", "email", request.getEmail());
@@ -74,7 +76,8 @@ public class UserService {
         // Assign school if provided
         if (request.getSchoolId() != null) {
             com.englishlearn.domain.entity.School school = schoolRepository.findById(request.getSchoolId())
-                    .orElseThrow(() -> ApiException.notFound("Không tìm thấy trường học với ID: " + request.getSchoolId()));
+                    .orElseThrow(
+                            () -> ApiException.notFound("Không tìm thấy trường học với ID: " + request.getSchoolId()));
             user.setSchool(school);
         }
 
@@ -87,7 +90,7 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         log.info("Created new user: {} with roles: {}", savedUser.getUsername(), request.getRoles());
-        
+
         return mapToResponse(savedUser);
     }
 
@@ -106,6 +109,48 @@ public class UserService {
         User savedUser = userRepository.save(user);
         log.info("Updated profile for user: {}", userId);
         return mapToResponse(savedUser);
+    }
+
+    @Transactional
+    public UserResponse updateUser(Long userId, UpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy người dùng với ID: " + userId));
+
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getEmail() != null) {
+            if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateResourceException("Tài khoản", "email", request.getEmail());
+            }
+            user.setEmail(request.getEmail());
+        }
+        if (request.getIsActive() != null)
+            user.setIsActive(request.getIsActive());
+        if (request.getCoins() != null)
+            user.setCoins(request.getCoins());
+
+        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+            user.getRoles().clear();
+            for (String roleName : request.getRoles()) {
+                Role role = roleRepository.findByName(roleName)
+                        .orElseThrow(() -> ApiException.notFound("Không tìm thấy vai trò: " + roleName));
+                user.getRoles().add(role);
+            }
+        }
+
+        User savedUser = userRepository.save(user);
+        log.info("Admin updated user: {}", userId);
+        return mapToResponse(savedUser);
+    }
+
+    public AdminUserStatsResponse getAdminStats() {
+        return new AdminUserStatsResponse(
+                userRepository.count(),
+                userRepository.countActiveUsers(),
+                userRepository.countByRoleName(Role.TEACHER),
+                userRepository.countByRoleName(Role.STUDENT),
+                userRepository.sumTotalCoins() != null ? userRepository.sumTotalCoins() : 0L);
     }
 
     @Transactional
@@ -129,7 +174,7 @@ public class UserService {
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy người dùng"));
-        
+
         // Delete the user
         userRepository.delete(user);
         log.info("Deleted user: {} (ID: {})", user.getUsername(), userId);

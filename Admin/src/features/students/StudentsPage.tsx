@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Users, Search, Trash2, UserX, Loader2, TrendingUp, CheckCircle, ChevronLeft, ChevronRight, Mail, Calendar } from 'lucide-react'
+import { Users, Search, Trash2, UserX, Loader2, TrendingUp, CheckCircle, ChevronLeft, ChevronRight, Mail, Calendar, Plus, Edit } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import type { ApiResponse, User } from '@/types/api'
+import { UserDialog } from '@/components/shared/UserDialog'
 
 export default function StudentsPage() {
     const [students, setStudents] = useState<User[]>([])
@@ -15,11 +16,13 @@ export default function StudentsPage() {
     const [search, setSearch] = useState('')
     const [deleting, setDeleting] = useState<number | null>(null)
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+    const [dialogOpen, setDialogOpen] = useState(false)
+    const [editingUser, setEditingUser] = useState<User | null>(null)
 
     const fetchStudents = async () => {
         setLoading(true)
         try {
-            const response = await api.get<ApiResponse<any>>('/users/students')
+            const response = await api.get<ApiResponse<User[] | { content: User[] }>>('/users/students')
             const data = response.data.data
 
             // Handle both array and paginated response
@@ -90,6 +93,15 @@ export default function StudentsPage() {
                     <h1 className="text-3xl font-extrabold tracking-tight">Quản lý học sinh</h1>
                     <p className="text-muted-foreground mt-1.5 font-medium">Theo dõi và quản lý danh sách học sinh trong hệ thống.</p>
                 </div>
+                <Button 
+                    onClick={() => {
+                        setEditingUser(null)
+                        setDialogOpen(true)
+                    }}
+                    className="h-12 px-6 rounded-xl gap-2 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary shadow-lg shadow-primary/20"
+                >
+                    <Plus className="h-5 w-5" /> Thêm học sinh
+                </Button>
             </div>
 
             {/* Stats Overview */}
@@ -242,6 +254,17 @@ export default function StudentsPage() {
                                                     <Button 
                                                         variant="ghost" 
                                                         size="icon" 
+                                                        className="h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-all"
+                                                        onClick={() => {
+                                                            setEditingUser(student)
+                                                            setDialogOpen(true)
+                                                        }}
+                                                    >
+                                                        <Edit className="h-4.5 w-4.5" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
                                                         className="h-9 w-9 rounded-lg hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive transition-all"
                                                         onClick={() => handleDelete(student)}
                                                         disabled={deleting === student.id}
@@ -278,6 +301,14 @@ export default function StudentsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <UserDialog 
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                user={editingUser}
+                onSuccess={fetchStudents}
+                role="ROLE_STUDENT"
+            />
         </div>
     )
 }

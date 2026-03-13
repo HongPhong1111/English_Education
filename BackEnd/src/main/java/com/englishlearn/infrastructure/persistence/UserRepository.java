@@ -81,4 +81,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   @Query("SELECT u FROM User u WHERE u.school.id = :schoolId")
   List<User> findAllBySchoolId(@Param("schoolId") Long schoolId);
+
+  @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = true")
+  long countActiveUsers();
+
+  @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.name = :roleName")
+  long countByRoleName(@Param("roleName") String roleName);
+
+  @Query("SELECT SUM(u.coins) FROM User u")
+  Long sumTotalCoins();
 }

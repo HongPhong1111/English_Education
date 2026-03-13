@@ -29,6 +29,13 @@ export default function UsersPage() {
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
     const [totalElements, setTotalElements] = useState(0)
+    const [userStats, setUserStats] = useState({
+        totalUsers: 0,
+        activeUsers: 0,
+        teacherCount: 0,
+        studentCount: 0,
+        totalCoins: 0
+    })
 
     // Edit user dialog
     const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -74,7 +81,21 @@ export default function UsersPage() {
         }
     }
 
-    useEffect(() => { fetchUsers() }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+    const fetchStats = async () => {
+        try {
+            const response = await api.get<ApiResponse<any>>('/users/stats')
+            if (response.data.success) {
+                setUserStats(response.data.data)
+            }
+        } catch (error) {
+            console.error('Error fetching user stats:', error)
+        }
+    }
+
+    useEffect(() => {
+        fetchUsers()
+        fetchStats()
+    }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleUpdateUser = async () => {
         if (!selectedUser) return
@@ -186,10 +207,10 @@ export default function UsersPage() {
     })
 
     const stats = [
-        { title: 'Tổng người dùng', value: '1,284', icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
-        { title: 'Đang hoạt động', value: '1,150', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { title: 'Streak cao nhất', value: '45 ngày', icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-        { title: 'Tổng xu hệ thống', value: '82.5K', icon: Coins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { title: 'Tổng người dùng', value: userStats.totalUsers.toLocaleString(), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+        { title: 'Đang hoạt động', value: userStats.activeUsers.toLocaleString(), icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { title: 'Giáo viên', value: userStats.teacherCount.toLocaleString(), icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+        { title: 'Tổng xu hệ thống', value: userStats.totalCoins.toLocaleString(), icon: Coins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ]
 
     return (

@@ -48,6 +48,18 @@ export default function QuestionsPage() {
 
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleting, setDeleting] = useState<Question | null>(null)
+    const [statsData, setStatsData] = useState<any>(null)
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await api.get<ApiResponse<any>>('/dashboard/stats')
+            if (response.data.success) {
+                setStatsData(response.data.data)
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error)
+        }
+    }
 
     const fetchQuestions = async () => {
         setLoading(true)
@@ -73,6 +85,7 @@ export default function QuestionsPage() {
     useEffect(() => {
         fetchQuestions()
         fetchLessons()
+        fetchDashboardStats()
     }, [])
 
     const resetForm = () => {
@@ -148,9 +161,9 @@ export default function QuestionsPage() {
     const filtered = questions.filter((q) => q.questionText.toLowerCase().includes(search.toLowerCase()))
 
     const stats = [
-        { title: 'Ngân hàng câu hỏi', value: questions.length.toString(), icon: HelpCircle, color: 'text-primary', bg: 'bg-primary/10' },
-        { title: 'Đã sử dụng', value: '1,240', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { title: 'Tỉ lệ chính xác', value: '68%', icon: Target, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { title: 'Ngân hàng câu hỏi', value: statsData?.totalQuestions?.toLocaleString() || '0', icon: HelpCircle, color: 'text-primary', bg: 'bg-primary/10' },
+        { title: 'Câu hỏi đã tạo', value: questions.length.toString(), icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { title: 'Điểm trung bình hệ thống', value: (statsData?.averageScore || 0).toFixed(1), icon: Target, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ]
 
     return (

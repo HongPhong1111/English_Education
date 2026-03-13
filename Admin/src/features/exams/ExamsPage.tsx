@@ -74,6 +74,18 @@ export default function ExamsPage() {
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleting, setDeleting] = useState<Exam | null>(null)
     const [questionSearch, setQuestionSearch] = useState('')
+    const [statsData, setStatsData] = useState<any>(null)
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await api.get<ApiResponse<any>>('/dashboard/stats')
+            if (response.data.success) {
+                setStatsData(response.data.data)
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error)
+        }
+    }
 
     const fetchClasses = async () => {
         try {
@@ -110,6 +122,7 @@ export default function ExamsPage() {
     useEffect(() => {
         fetchClasses()
         fetchQuestions()
+        fetchDashboardStats()
     }, [])
 
     useEffect(() => {
@@ -218,9 +231,9 @@ export default function ExamsPage() {
     const filteredQuestions = questions.filter(q => q.questionText.toLowerCase().includes(questionSearch.toLowerCase()))
 
     const stats = [
-        { title: 'Tổng số bài thi', value: exams.length.toString(), icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
-        { title: 'Lượt tham gia', value: '842', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-500/10', trend: 'up' },
-        { title: 'Điểm trung bình', value: '7.8', icon: TrendingUp, color: 'text-violet-500', bg: 'bg-violet-500/10' },
+        { title: 'Tổng số bài thi', value: statsData?.totalExams?.toString() || '0', icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
+        { title: 'Lượt tham gia', value: statsData?.totalAttempts?.toLocaleString() || '0', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-500/10', trend: 'up' },
+        { title: 'Điểm trung bình', value: (statsData?.averageScore || 0).toFixed(1), icon: TrendingUp, color: 'text-violet-500', bg: 'bg-violet-500/10' },
     ]
 
     return (

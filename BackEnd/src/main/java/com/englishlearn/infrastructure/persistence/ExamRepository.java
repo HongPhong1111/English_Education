@@ -37,4 +37,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @Query("SELECT e FROM Exam e WHERE e.classRoom.school.id = :schoolId")
     Page<Exam> findBySchoolId(@Param("schoolId") Long schoolId, Pageable pageable);
+
+    long countByStatus(String status);
 }

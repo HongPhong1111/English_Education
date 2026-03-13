@@ -2,6 +2,8 @@ package com.englishlearn.presentation.controller;
 
 import com.englishlearn.application.dto.request.ChangePasswordRequest;
 import com.englishlearn.application.dto.request.CreateUserRequest;
+import com.englishlearn.application.dto.request.UpdateUserRequest;
+import com.englishlearn.application.dto.response.AdminUserStatsResponse;
 import com.englishlearn.application.dto.response.ApiResponse;
 import com.englishlearn.application.dto.response.AuditLogResponse;
 import com.englishlearn.application.dto.response.UserResponse;
@@ -128,9 +130,9 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
             @RequestBody @Valid CreateUserRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
-        
+
         // If current user is SCHOOL admin, force the schoolId to be their own school
         if (currentUser.getRoles().contains("ROLE_SCHOOL")) {
             if (currentUser.getSchoolId() == null) {
@@ -139,7 +141,7 @@ public class UserController {
             }
             request.setSchoolId(currentUser.getSchoolId());
         }
-        
+
         UserResponse user = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Tạo người dùng thành công", user));
@@ -154,6 +156,42 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa người dùng"));
+    }
+
+    /**
+     * PUT /api/v1/users/{id} - Cập nhật người dùng (Admin and School)
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOL')")
+    @Operation(summary = "Cập nhật người dùng theo ID")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable Long id,
+            @RequestBody @Valid UpdateUserRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
+        UserResponse targetUser = userService.getUserById(id);
+
+        // Security check for SCHOOL role
+        if (currentUser.getRoles().contains("ROLE_SCHOOL")) {
+            if (currentUser.getSchoolId() == null || !currentUser.getSchoolId().equals(targetUser.getSchoolId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.error("Không có quyền cập nhật người dùng này", null));
+            }
+        }
+
+        UserResponse user = userService.updateUser(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật người dùng thành công", user));
+    }
+
+    /**
+     * GET /api/v1/users/stats - Lấy thống kê người dùng cho Admin
+     */
+    @GetMapping("/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lấy thống kê người dùng (Admin only)")
+    public ResponseEntity<ApiResponse<AdminUserStatsResponse>> getUserStats() {
+        return ResponseEntity.ok(ApiResponse.success(userService.getAdminStats()));
     }
 
     /**
@@ -216,12 +254,13 @@ public class UserController {
 
         UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
         Long schoolId = currentUser.getSchoolId();
-        
-        System.out.println("DEBUG: User " + userDetails.getUsername() + " (School ID: " + schoolId + ") is searching teachers.");
-        
+
+        System.out.println(
+                "DEBUG: User " + userDetails.getUsername() + " (School ID: " + schoolId + ") is searching teachers.");
+
         // Search for this user's school
         Page<UserResponse> teachers = userService.searchTeachers(keyword, schoolId, pageable);
-        
+
         // Debug: also check if ANY teachers exist in system
         Page<UserResponse> allTeachersSystemWide = userService.searchTeachers("", null, Pageable.unpaged());
         System.out.println("DEBUG: Teachers found for School " + schoolId + ": " + teachers.getTotalElements());

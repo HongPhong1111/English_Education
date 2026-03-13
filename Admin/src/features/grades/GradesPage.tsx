@@ -76,8 +76,22 @@ export default function GradesPage() {
         }
     }
 
+    const [statsData, setStatsData] = useState<any>(null)
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await api.get<ApiResponse<any>>('/dashboard/stats')
+            if (response.data.success) {
+                setStatsData(response.data.data)
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error)
+        }
+    }
+
     useEffect(() => {
         fetchGrades()
+        fetchDashboardStats()
     }, [userSnapshot?.id])
 
     const filtered = results.filter((r) =>
@@ -86,8 +100,8 @@ export default function GradesPage() {
     )
 
     const stats = [
-        { title: 'Tổng lượt thi', value: results.length.toString(), change: '+12% tuần này', icon: Target, color: 'text-primary', bg: 'bg-primary/10', trend: 'up' },
-        { title: 'Điểm trung bình', value: (results.reduce((sum, r) => sum + r.score, 0) / (results.length || 1)).toFixed(1), change: 'Toàn hệ thống', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { title: 'Tổng lượt thi', value: statsData?.totalAttempts?.toLocaleString() || results.length.toString(), change: '+12% tuần này', icon: Target, color: 'text-primary', bg: 'bg-primary/10', trend: 'up' },
+        { title: 'Điểm trung bình', value: (statsData?.averageScore || 0).toFixed(1), change: 'Toàn hệ thống', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { title: 'Xếp loại A/B', value: results.filter(r => ['A', 'B'].includes(r.grade)).length.toString(), change: 'Học viên giỏi', icon: Award, color: 'text-violet-500', bg: 'bg-violet-500/10' },
     ]
 

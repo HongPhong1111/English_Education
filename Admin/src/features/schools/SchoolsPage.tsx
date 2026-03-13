@@ -35,6 +35,18 @@ export default function SchoolsPage() {
     const [detailOpen, setDetailOpen] = useState(false)
     const [viewingSchool, setViewingSchool] = useState<SchoolType | null>(null)
     const [submitting, setSubmitting] = useState(false)
+    const [statsData, setStatsData] = useState<any>(null)
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await api.get<ApiResponse<any>>('/dashboard/stats')
+            if (response.data.success) {
+                setStatsData(response.data.data)
+            }
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error)
+        }
+    }
 
     const fetchSchools = async () => {
         setLoading(true)
@@ -51,6 +63,7 @@ export default function SchoolsPage() {
 
     useEffect(() => {
         fetchSchools()
+        fetchDashboardStats()
     }, [])
 
     const handleSubmit = async () => {
@@ -123,9 +136,9 @@ export default function SchoolsPage() {
     })
 
     const stats = [
-        { title: 'Tổng số trường', value: '128', change: '+12%', icon: School, color: 'text-primary', bg: 'bg-primary/10', trend: 'up' },
-        { title: 'Trường đang hoạt động', value: '124', change: 'Đang hoạt động', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { title: 'Yêu cầu mới', value: '12', change: '4 Chờ xử lý', icon: ClipboardList, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { title: 'Tổng số trường', value: statsData?.totalSchools?.toString() || '0', change: '+12%', icon: School, color: 'text-primary', bg: 'bg-primary/10', trend: 'up' },
+        { title: 'Trường đang hoạt động', value: statsData?.activeSchools?.toString() || '0', change: 'Đang hoạt động', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { title: 'Tổng số học sinh', value: statsData?.studentCount?.toLocaleString() || '0', change: 'Toàn hệ thống', icon: ClipboardList, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ]
 
     return (

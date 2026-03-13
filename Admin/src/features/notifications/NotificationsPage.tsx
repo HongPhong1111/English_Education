@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Bell, Send, Search, CheckCircle, Loader2, Info, History, MessageSquare, Clock, Trash, Users, School, GraduationCap, Globe, Layers } from 'lucide-react'
+import { Bell, Send, Search, Loader2, History, MessageSquare, Trash, CheckCircle, Clock, Globe } from 'lucide-react'
 import { UserSelect } from '@/components/common/UserSelect'
 import { AxiosError } from 'axios'
 import api from '@/lib/api'
@@ -140,14 +139,15 @@ export default function NotificationsPage() {
         }
     }
 
-    const fetchNotifications = async () => {
-        if (!viewUserId.trim()) {
+    const fetchNotifications = async (userIdOverride?: string) => {
+        const targetId = userIdOverride || viewUserId
+        if (!targetId.trim()) {
             toast.error('Vui lòng chọn người dùng')
             return
         }
         setLoadingNotifications(true)
         try {
-            const response = await api.get<ApiResponse<Notification[]>>(`/notifications/user/${viewUserId}`)
+            const response = await api.get<ApiResponse<Notification[]>>(`/notifications/user/${targetId}`)
             setNotifications(response.data.data)
             setHasLoaded(true)
         } catch (error: unknown) {
@@ -324,11 +324,14 @@ export default function NotificationsPage() {
                                 <div className="flex items-center gap-2">
                                     <UserSelect 
                                         value={viewUserId}
-                                        onSelect={(val) => { setViewUserId(val); setTimeout(() => fetchNotifications(), 0) }}
+                                        onSelect={(val) => { 
+                                            setViewUserId(val); 
+                                            fetchNotifications(val); 
+                                        }}
                                         placeholder="Tìm người dùng..."
                                         className="w-48 h-10 text-xs shadow-none border-border/50"
                                     />
-                                    <Button size="sm" onClick={fetchNotifications} disabled={loadingNotifications} className="rounded-xl h-10 px-4 font-bold bg-primary/5 text-primary hover:bg-primary hover:text-white border border-primary/10 transition-all">
+                                    <Button size="sm" onClick={() => fetchNotifications()} disabled={loadingNotifications} className="rounded-xl h-10 px-4 font-bold bg-primary/5 text-primary hover:bg-primary hover:text-white border border-primary/10 transition-all">
                                         <Search className="h-4 w-4" />
                                     </Button>
                                 </div>

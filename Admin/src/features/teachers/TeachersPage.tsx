@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { GraduationCap, Search, Trash2, UserX, Loader2, TrendingUp, CheckCircle, ChevronLeft, ChevronRight, Mail, Calendar } from 'lucide-react'
+import { GraduationCap, Search, Trash2, UserX, Loader2, TrendingUp, CheckCircle, ChevronLeft, ChevronRight, Mail, Calendar, Plus, Edit } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import type { ApiResponse, User } from '@/types/api'
+import { UserDialog } from '@/components/shared/UserDialog'
 
 export default function TeachersPage() {
     const [teachers, setTeachers] = useState<User[]>([])
@@ -15,11 +16,13 @@ export default function TeachersPage() {
     const [search, setSearch] = useState('')
     const [deleting, setDeleting] = useState<number | null>(null)
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+    const [dialogOpen, setDialogOpen] = useState(false)
+    const [editingUser, setEditingUser] = useState<User | null>(null)
 
     const fetchTeachers = async () => {
         setLoading(true)
         try {
-            const response = await api.get<ApiResponse<any>>('/users/teachers')
+            const response = await api.get<ApiResponse<User[] | { content: User[] }>>('/users/teachers')
             const data = response.data.data
 
             // Handle both array and paginated response
@@ -130,12 +133,23 @@ export default function TeachersPage() {
             <Card className="premium-card border-none shadow-xl dark:shadow-none overflow-hidden">
                 <CardHeader className="p-8 pb-0">
                     <div className="flex items-center justify-between flex-wrap gap-4">
-                        <CardTitle className="flex items-center gap-3 text-xl font-black">
-                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                <GraduationCap className="h-5 w-5 text-primary" />
-                            </div>
-                            Danh sách giáo viên
-                        </CardTitle>
+                        <div className="flex items-center justify-between w-full">
+                            <CardTitle className="flex items-center gap-3 text-xl font-black">
+                                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                    <GraduationCap className="h-5 w-5 text-primary" />
+                                </div>
+                                Danh sách giáo viên
+                            </CardTitle>
+                            <Button 
+                                onClick={() => {
+                                    setEditingUser(null)
+                                    setDialogOpen(true)
+                                }}
+                                className="h-11 px-5 rounded-xl gap-2 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary shadow-lg shadow-primary/20"
+                            >
+                                <Plus className="h-4 w-4" /> Thêm giáo viên
+                            </Button>
+                        </div>
                         <div className="flex items-center gap-4">
                             <div className="relative group">
                                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
@@ -239,6 +253,17 @@ export default function TeachersPage() {
                                                     <Button 
                                                         variant="ghost" 
                                                         size="icon" 
+                                                        className="h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-all"
+                                                        onClick={() => {
+                                                            setEditingUser(teacher)
+                                                            setDialogOpen(true)
+                                                        }}
+                                                    >
+                                                        <Edit className="h-4.5 w-4.5" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
                                                         className="h-9 w-9 rounded-lg hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive transition-all"
                                                         onClick={() => handleDelete(teacher)}
                                                         disabled={deleting === teacher.id}
@@ -275,6 +300,14 @@ export default function TeachersPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <UserDialog 
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                user={editingUser}
+                onSuccess={fetchTeachers}
+                role="ROLE_TEACHER"
+            />
         </div>
     )
 }
