@@ -80,8 +80,12 @@ export default function Header() {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative flex items-center gap-3 px-2 h-14 hover:bg-muted/50 rounded-2xl transition-all">
                             <div className="text-right hidden sm:flex flex-col">
-                                <p className="text-sm font-bold text-foreground leading-none">{user?.fullName || 'Admin user'}</p>
-                                <p className="text-[11px] text-muted-foreground font-semibold mt-1.5 uppercase tracking-tight">Quản trị viên</p>
+                                <p className="text-sm font-bold text-foreground leading-none">{user?.fullName || user?.username || 'User'}</p>
+                                <p className="text-[11px] text-muted-foreground font-semibold mt-1.5 uppercase tracking-tight">
+                                    {user?.roles?.includes('ROLE_ADMIN') ? 'Quản trị hệ thống' : 
+                                     user?.roles?.includes('ROLE_SCHOOL') ? `Quản lý: ${user?.schoolName || 'Trường học'}` : 
+                                     user?.roles?.includes('ROLE_TEACHER') ? 'Giáo viên' : 'Học sinh'}
+                                </p>
                             </div>
                             <Avatar className="h-11 w-11 border-2 border-background shadow-sm ring-1 ring-border">
                                 <AvatarImage src={user?.avatarUrl} alt={user?.fullName} />

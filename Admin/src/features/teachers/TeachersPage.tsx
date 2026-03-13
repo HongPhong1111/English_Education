@@ -19,21 +19,17 @@ export default function TeachersPage() {
     const fetchTeachers = async () => {
         setLoading(true)
         try {
-            const response = await api.get<ApiResponse<any>>('/users')
+            const response = await api.get<ApiResponse<any>>('/users/teachers')
             const data = response.data.data
 
             // Handle both array and paginated response
-            let allUsers: User[] = []
+            let teacherUsers: User[] = []
             if (Array.isArray(data)) {
-                allUsers = data
+                teacherUsers = data
             } else if (data && 'content' in data) {
-                allUsers = data.content
+                teacherUsers = data.content
             }
 
-            // Filter only teachers
-            const teacherUsers = allUsers.filter(user =>
-                user.roles && user.roles.includes('ROLE_TEACHER')
-            )
             setTeachers(teacherUsers)
         } catch (error) {
             console.error('Failed to fetch teachers:', error)

@@ -126,7 +126,20 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('SCHOOL')")
     @Operation(summary = "Tạo người dùng mới")
     public ResponseEntity<ApiResponse<UserResponse>> createUser(
-            @RequestBody @Valid CreateUserRequest request) {
+            @RequestBody @Valid CreateUserRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
+        
+        // If current user is SCHOOL admin, force the schoolId to be their own school
+        if (currentUser.getRoles().contains("ROLE_SCHOOL")) {
+            if (currentUser.getSchoolId() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Tài khoản trường học chưa được liên kết với trường nào", null));
+            }
+            request.setSchoolId(currentUser.getSchoolId());
+        }
+        
         UserResponse user = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Tạo người dùng thành công", user));
@@ -176,9 +189,6 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Đã thêm " + amount + " xu"));
     }
 
-    /**
-     * GET /api/v1/users/students - Tìm kiếm học sinh
-     */
     @GetMapping("/students")
     @PreAuthorize("hasAnyRole('ADMIN', 'SCHOOL', 'TEACHER')")
     @Operation(summary = "Tìm kiếm học sinh")
@@ -191,6 +201,33 @@ public class UserController {
         Long schoolId = currentUser.getSchoolId();
 
         return ResponseEntity.ok(ApiResponse.success(userService.searchStudents(keyword, schoolId, pageable)));
+    }
+
+    /**
+     * GET /api/v1/users/teachers - Tìm kiếm giáo viên
+     */
+    @GetMapping("/teachers")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SCHOOL')")
+    @Operation(summary = "Tìm kiếm giáo viên")
+    public ResponseEntity<ApiResponse<Page<UserResponse>>> searchTeachers(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @AuthenticationPrincipal UserDetails userDetails,
+            Pageable pageable) {
+
+        UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
+        Long schoolId = currentUser.getSchoolId();
+        
+        System.out.println("DEBUG: User " + userDetails.getUsername() + " (School ID: " + schoolId + ") is searching teachers.");
+        
+        // Search for this user's school
+        Page<UserResponse> teachers = userService.searchTeachers(keyword, schoolId, pageable);
+        
+        // Debug: also check if ANY teachers exist in system
+        Page<UserResponse> allTeachersSystemWide = userService.searchTeachers("", null, Pageable.unpaged());
+        System.out.println("DEBUG: Teachers found for School " + schoolId + ": " + teachers.getTotalElements());
+        System.out.println("DEBUG: Total Teachers in System: " + allTeachersSystemWide.getTotalElements());
+
+        return ResponseEntity.ok(ApiResponse.success(teachers));
     }
 
     /**

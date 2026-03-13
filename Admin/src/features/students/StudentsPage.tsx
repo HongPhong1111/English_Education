@@ -19,21 +19,17 @@ export default function StudentsPage() {
     const fetchStudents = async () => {
         setLoading(true)
         try {
-            const response = await api.get<ApiResponse<any>>('/users')
+            const response = await api.get<ApiResponse<any>>('/users/students')
             const data = response.data.data
 
             // Handle both array and paginated response
-            let allUsers: User[] = []
+            let studentUsers: User[] = []
             if (Array.isArray(data)) {
-                allUsers = data
+                studentUsers = data
             } else if (data && 'content' in data) {
-                allUsers = data.content
+                studentUsers = data.content
             }
 
-            // Filter only students
-            const studentUsers = allUsers.filter(user =>
-                user.roles && user.roles.includes('ROLE_STUDENT')
-            )
             setStudents(studentUsers)
         } catch (error) {
             console.error('Failed to fetch students:', error)

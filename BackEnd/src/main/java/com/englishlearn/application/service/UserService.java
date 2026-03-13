@@ -8,6 +8,7 @@ import com.englishlearn.domain.entity.User;
 import com.englishlearn.domain.exception.ApiException;
 import com.englishlearn.domain.exception.DuplicateResourceException;
 import com.englishlearn.infrastructure.persistence.RoleRepository;
+import com.englishlearn.infrastructure.persistence.SchoolRepository;
 import com.englishlearn.infrastructure.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final SchoolRepository schoolRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserResponse getUserById(Long id) {
@@ -68,6 +70,13 @@ public class UserService {
                 .isActive(true)
                 .roles(new HashSet<>())
                 .build();
+
+        // Assign school if provided
+        if (request.getSchoolId() != null) {
+            com.englishlearn.domain.entity.School school = schoolRepository.findById(request.getSchoolId())
+                    .orElseThrow(() -> ApiException.notFound("Không tìm thấy trường học với ID: " + request.getSchoolId()));
+            user.setSchool(school);
+        }
 
         // Assign roles
         for (String roleName : request.getRoles()) {
@@ -134,6 +143,10 @@ public class UserService {
 
     public Page<UserResponse> searchStudents(String keyword, Long schoolId, Pageable pageable) {
         return userRepository.searchStudents(keyword, schoolId, pageable).map(this::mapToResponse);
+    }
+
+    public Page<UserResponse> searchTeachers(String keyword, Long schoolId, Pageable pageable) {
+        return userRepository.searchTeachers(keyword, schoolId, pageable).map(this::mapToResponse);
     }
 
     @Transactional

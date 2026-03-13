@@ -59,6 +59,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
   @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'ROLE_STUDENT' AND (LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND (:schoolId IS NULL OR u.school.id = :schoolId)")
   Page<User> searchStudents(@Param("keyword") String keyword, @Param("schoolId") Long schoolId, Pageable pageable);
 
+  @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'ROLE_TEACHER' AND (LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND (:schoolId IS NULL OR u.school.id = :schoolId)")
+  Page<User> searchTeachers(@Param("keyword") String keyword, @Param("schoolId") Long schoolId, Pageable pageable);
+
   @Query("""
       SELECT DISTINCT u
       FROM User u
