@@ -57,14 +57,102 @@
         "usernameOrEmail": "Tên đăng nhập hoặc Email",
         "password": "Mật khẩu",
         "rememberMe": "Ghi nhớ đăng nhập",
-        "forgotPassword": "Quên mật khẩu?",
         "loginWithGoogle": "Đăng nhập với Google",
         "orContinueWith": "Hoặc tiếp tục với",
         "learningIsFun": "Học tập thật vui!",
         "unlockPotential": "Mở khóa tiềm năng với các bài học tiếng Anh tương tác được thiết kế dành riêng cho bạn.",
         "dontHaveAccount": "Chưa có tài khoản?",
         "signUpNow": "Đăng ký ngay",
-        "accountNoAccess": "Tài khoản không có quyền truy cập"
+        "accountNoAccess": "Tài khoản không có quyền truy cập",
+        "usernamePlaceholder": "superlearner123",
+        "passwordPlaceholder": "••••••••",
+        "forgotPassword": {
+            "title": "Quên mật khẩu?",
+            "instructions": "Nhập địa chỉ email gắn với tài khoản của bạn.",
+            "emailLabel": "Địa chỉ Email",
+            "emailPlaceholder": "name@domain.com",
+            "next": "Tiếp theo →",
+            "backToLogin": "Quay lại đăng nhập",
+            "newPasswordTitle": "Đặt mật khẩu mới",
+            "newPasswordInstructions": "Nhập mật khẩu mới cho tài khoản",
+            "passwordLabel": "Mật khẩu mới",
+            "passwordPlaceholder": "Ít nhất 6 ký tự",
+            "confirmPasswordLabel": "Xác nhận mật khẩu mới",
+            "confirmPasswordPlaceholder": "Nhập lại mật khẩu mới",
+            "passwordMismatch": "Mật khẩu không khớp",
+            "sendingOtp": "Đang gửi OTP...",
+            "changePasswordSendOtp": "Đổi mật khẩu → Gửi mã OTP",
+            "stepBack": "Quay lại",
+            "enterOtpTitle": "Nhập mã OTP",
+            "otpSentTo": "Mã xác nhận đã gửi đến",
+            "otpLabel": "Mã OTP (6 chữ số)",
+            "otpValidDuration": "⏰ Mã có hiệu lực trong {{minutes}} phút",
+            "verifying": "Đang xác nhận...",
+            "verifyOtp": "Xác nhận OTP",
+            "resend": "Gửi lại",
+            "didntReceive": "Không nhận được mã?",
+            "successTitle": "Đặt lại thành công!",
+            "successDesc": "Mật khẩu của bạn đã được cập nhật. Hãy đăng nhập với mật khẩu mới.",
+            "loginNow": "Đăng nhập ngay",
+            "error": {
+                "passwordLength": "Mật khẩu mới phải có ít nhất 6 ký tự",
+                "confirmMismatch": "Mật khẩu xác nhận không khớp",
+                "generic": "Có lỗi xảy ra. Vui lòng thử lại.",
+                "otpIncomplete": "Vui lòng nhập đầy đủ 6 chữ số OTP",
+                "otpInvalid": "OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại."
+            },
+            "steps": {
+                "email": "Email",
+                "newPassword": "Mật khẩu",
+                "otp": "OTP",
+                "done": "Xong"
+            }
+        },
+        "register": {
+            "step1": {
+                "title": "Tạo tài khoản của bạn",
+                "description": "Điền thông tin để bắt đầu hành trình.",
+                "fullName": "Họ và tên",
+                "fullNamePlaceholder": "Bạn tên là gì?",
+                "username": "Tên đăng nhập",
+                "usernamePlaceholder": "superlearner123",
+                "parentEmail": "Email phụ huynh",
+                "parentEmailPlaceholder": "email@example.com",
+                "parentEmailNote": "Chúng tôi cần email này để bảo vệ tài khoản của bạn.",
+                "password": "Mật khẩu",
+                "passwordPlaceholder": "Tạo mật khẩu bí mật",
+                "confirmPassword": "Xác nhận mật khẩu",
+                "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+                "back": "← Quay lại",
+                "nextStep": "Bước tiếp theo",
+                "error": {
+                    "passwordLength": "Mật khẩu phải có ít nhất 6 ký tự",
+                    "confirmMismatch": "Mật khẩu xác nhận không khớp"
+                }
+            },
+            "step2": {
+                "progress": "Bước 2 trên 3",
+                "heading": "Chọn bạn đồng hành!",
+                "description": "Chọn một nhân vật để bắt đầu cuộc phiêu lưu. Đừng lo, bạn có thể đổi sau trong hồ sơ.",
+                "steps": {
+                    "info": "Thông tin tài khoản",
+                    "avatar": "Chọn Avatar",
+                    "done": "Hoàn thành"
+                },
+                "selected": "Đúng rồi, giống mình!",
+                "ready": "Lựa chọn tuyệt vời! Sẵn sàng chưa?",
+                "back": "Quay lại",
+                "finish": "Hoàn thành đăng ký",
+                "signingUp": "Đang đăng ký..."
+            },
+            "step3": {
+                "welcome": "Chào mừng, {{name}}! Sẵn sàng học tiếng Anh chưa?",
+                "firstGoal": "Mục tiêu đầu tiên đã mở khóa!",
+                "firstGoalDesc": "Hoàn thành bài học đầu tiên để nhận {{coins}} xu!",
+                "getStarted": "Bắt đầu thôi!",
+                "changeAvatar": "Đổi avatar của tôi"
+            }
+        }
     },
     "home": {
         "heroTitle": "Làm chủ tiếng Anh",

@@ -99,7 +99,7 @@ export default function Login() {
                                                 value={username}
                                                 onChange={(e) => setUsername(e.target.value)}
                                                 className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-primary-500 focus:ring-0 text-slate-900 dark:text-white placeholder-slate-500 font-medium text-lg transition-all"
-                                                placeholder="superlearner123"
+                                                placeholder={t('auth.usernamePlaceholder')} 
                                                 required
                                             />
                                         </div>
@@ -117,7 +117,7 @@ export default function Login() {
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-primary-500 focus:ring-0 text-slate-900 dark:text-white placeholder-slate-500 font-medium text-lg transition-all"
-                                                placeholder="••••••••"
+                                                placeholder={t('auth.passwordPlaceholder')} 
                                                 required
                                             />
                                         </div>
@@ -139,7 +139,7 @@ export default function Login() {
                                             to="/forgot-password"
                                             className="text-primary-500 hover:text-orange-600 font-bold text-base flex items-center gap-1 group"
                                         >
-                                            {t('auth.forgotPassword')}
+                                            {t('auth.forgotPassword.title')}
                                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={2} />
                                         </Link>
                                     </div>

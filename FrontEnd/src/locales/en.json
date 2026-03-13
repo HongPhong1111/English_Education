@@ -57,14 +57,102 @@
         "usernameOrEmail": "Username or Email",
         "password": "Password",
         "rememberMe": "Remember me",
-        "forgotPassword": "Forgot password?",
         "loginWithGoogle": "Login with Google",
         "orContinueWith": "Or continue with",
         "learningIsFun": "Learning is fun!",
         "unlockPotential": "Unlock your potential with interactive English lessons designed just for you.",
         "dontHaveAccount": "Don't have an account?",
         "signUpNow": "Sign up now",
-        "accountNoAccess": "Account has no access rights"
+        "accountNoAccess": "Account has no access rights",
+        "usernamePlaceholder": "superlearner123",
+        "passwordPlaceholder": "••••••••",
+        "forgotPassword": {
+            "title": "Forgot password?",
+            "instructions": "Enter the email address associated with your account.",
+            "emailLabel": "Email address",
+            "emailPlaceholder": "name@domain.com",
+            "next": "Next →",
+            "backToLogin": "Back to login",
+            "newPasswordTitle": "Set new password",
+            "newPasswordInstructions": "Enter a new password for your account",
+            "passwordLabel": "New password",
+            "passwordPlaceholder": "At least 6 characters",
+            "confirmPasswordLabel": "Confirm new password",
+            "confirmPasswordPlaceholder": "Re‑enter new password",
+            "passwordMismatch": "Passwords do not match",
+            "sendingOtp": "Sending OTP…",
+            "changePasswordSendOtp": "Change password → Send OTP",
+            "stepBack": "Back",
+            "enterOtpTitle": "Enter OTP code",
+            "otpSentTo": "Confirmation code sent to",
+            "otpLabel": "OTP code (6 digits)",
+            "otpValidDuration": "⏰ Code valid for {{minutes}} minutes",
+            "verifying": "Verifying…",
+            "verifyOtp": "Verify OTP",
+            "resend": "Resend",
+            "didntReceive": "Didn't receive a code?",
+            "successTitle": "Reset successful!",
+            "successDesc": "Your password has been updated. Please log in with the new password.",
+            "loginNow": "Log in now",
+            "error": {
+                "passwordLength": "New password must be at least 6 characters",
+                "confirmMismatch": "Confirmation password does not match",
+                "generic": "Something went wrong. Please try again.",
+                "otpIncomplete": "Please enter all 6 digits of the OTP",
+                "otpInvalid": "OTP is invalid or expired. Please try again."
+            },
+            "steps": {
+                "email": "Email",
+                "newPassword": "Password",
+                "otp": "OTP",
+                "done": "Done"
+            }
+        },
+        "register": {
+            "step1": {
+                "title": "Create your account",
+                "description": "Fill in the details to get started.",
+                "fullName": "Full name",
+                "fullNamePlaceholder": "What’s your name?",
+                "username": "Username",
+                "usernamePlaceholder": "superlearner123",
+                "parentEmail": "Parent email",
+                "parentEmailPlaceholder": "email@example.com",
+                "parentEmailNote": "We need this email to protect your account.",
+                "password": "Password",
+                "passwordPlaceholder": "Create a secret password",
+                "confirmPassword": "Confirm password",
+                "confirmPasswordPlaceholder": "Re‑enter password",
+                "back": "← Back",
+                "nextStep": "Next step",
+                "error": {
+                    "passwordLength": "Password must be at least 6 characters",
+                    "confirmMismatch": "Passwords do not match"
+                }
+            },
+            "step2": {
+                "progress": "Step 2 of 3",
+                "heading": "Choose your buddy!",
+                "description": "Pick a character to start the adventure. Don’t worry, you can change it later in profile.",
+                "steps": {
+                    "info": "Account info",
+                    "avatar": "Choose avatar",
+                    "done": "Done"
+                },
+                "selected": "Perfect, that's me!",
+                "ready": "Great choice! Ready to go?",
+                "back": "Back",
+                "finish": "Complete registration",
+                "signingUp": "Signing up..."
+            },
+            "step3": {
+                "welcome": "Welcome, {{name}}! Ready to learn English?",
+                "firstGoal": "First goal unlocked!",
+                "firstGoalDesc": "Complete your first lesson to earn {{coins}} coins!",
+                "getStarted": "Let's go!",
+                "changeAvatar": "Change my avatar"
+            }
+        }
     },
     "home": {
         "heroTitle": "Master English",
