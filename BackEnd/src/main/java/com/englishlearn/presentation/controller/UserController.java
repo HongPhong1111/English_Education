@@ -158,7 +158,8 @@ public class UserController {
     @Operation(summary = "Xóa người dùng")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest servletRequest) {
 
         UserResponse currentUser = userService.getUserByUsername(userDetails.getUsername());
         UserResponse targetUser = userService.getUserById(id);
@@ -174,7 +175,7 @@ public class UserController {
 
         // Log action
         auditLogService.log(currentUser.getId(), "DELETE_USER", "Xóa người dùng: " + targetUser.getUsername(),
-                request.getRemoteAddr(), request.getHeader("User-Agent"));
+                servletRequest.getRemoteAddr(), servletRequest.getHeader("User-Agent"));
 
         return ResponseEntity.ok(ApiResponse.success("Đã xóa người dùng"));
     }

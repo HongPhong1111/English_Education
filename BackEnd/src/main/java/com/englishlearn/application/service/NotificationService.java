@@ -2,7 +2,6 @@ package com.englishlearn.application.service;
 
 import com.englishlearn.application.dto.request.BroadcastNotificationRequest;
 import com.englishlearn.application.dto.response.NotificationResponse;
-import com.englishlearn.domain.entity.ClassRoom;
 import com.englishlearn.domain.entity.Notification;
 import com.englishlearn.domain.entity.User;
 import com.englishlearn.domain.exception.ResourceNotFoundException;
