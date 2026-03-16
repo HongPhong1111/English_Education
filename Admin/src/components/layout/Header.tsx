@@ -208,7 +208,7 @@ export default function Header() {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-border" />
                         <div className="p-1">
-                            <DropdownMenuItem onClick={() => navigate('/profile')} className="rounded-xl h-10 font-medium cursor-pointer">
+                            <DropdownMenuItem onClick={() => navigate('/settings')} className="rounded-xl h-10 font-medium cursor-pointer">
                                 Hồ sơ cá nhân
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => navigate('/settings')} className="rounded-xl h-10 font-medium cursor-pointer">
