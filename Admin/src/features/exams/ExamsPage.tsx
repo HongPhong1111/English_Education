@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,22 +58,19 @@ const emptyForm: ExamRequest = {
 
 export default function ExamsPage() {
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
     const { user } = useAppSelector((state) => state.auth)
 
     const [exams, setExams] = useState<Exam[]>([])
     const [classes, setClasses] = useState<ClassRoom[]>([])
-    const [questions, setQuestions] = useState<Question[]>([])
     const [loading, setLoading] = useState(false)
     const [search, setSearch] = useState('')
 
-    const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [editing, setEditing] = useState<Exam | null>(null)
-    const [form, setForm] = useState<ExamRequest>({ ...emptyForm })
-    const [submitting, setSubmitting] = useState(false)
+    const [selectedClassId, setSelectedClassId] = useState<number | null>(
+        searchParams.get('classId') ? Number(searchParams.get('classId')) : null
+    )
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleting, setDeleting] = useState<Exam | null>(null)
-    const [questionSearch, setQuestionSearch] = useState('')
     const [statsData, setStatsData] = useState<any>(null)
 
     const fetchDashboardStats = async () => {
@@ -92,20 +89,12 @@ export default function ExamsPage() {
             const response = await api.get<ApiResponse<ClassRoom[]>>('/classes')
             const data = response.data.data
             setClasses(Array.isArray(data) ? data : [])
-            if (Array.isArray(data) && data.length > 0 && !selectedClassId) {
+            
+            if (Array.isArray(data) && data.length > 0 && !selectedClassId && !searchParams.get('classId')) {
                 setSelectedClassId(data[0].id)
+                setSearchParams({ classId: data[0].id.toString() })
             }
         } catch { setClasses([]) }
-    }
-
-    const fetchQuestions = async () => {
-        try {
-            const response = await api.get<ApiResponse<Question[] | Page<Question>>>('/questions')
-            const data = response.data.data
-            if (Array.isArray(data)) setQuestions(data)
-            else if (data && 'content' in data) setQuestions(data.content)
-            else setQuestions([])
-        } catch { setQuestions([]) }
     }
 
     const fetchExams = useCallback(async (classId: number) => {
@@ -121,7 +110,6 @@ export default function ExamsPage() {
 
     useEffect(() => {
         fetchClasses()
-        fetchQuestions()
         fetchDashboardStats()
     }, [])
 
@@ -130,69 +118,10 @@ export default function ExamsPage() {
         else setExams([])
     }, [selectedClassId, fetchExams])
 
-    const resetForm = () => {
-        setDialogOpen(false)
-        setEditing(null)
-        setForm({ ...emptyForm })
-        setQuestionSearch('')
-    }
-
-    const openCreate = () => {
-        resetForm()
-        setForm({ ...emptyForm, classId: selectedClassId ?? 0 })
-        setDialogOpen(true)
-    }
-
-    const openEdit = async (exam: Exam) => {
-        setLoading(true)
-        try {
-            const response = await api.get<ApiResponse<Exam>>(`/exams/${exam.id}`)
-            const fullExam = response.data.data
-            setEditing(fullExam)
-            setForm({
-                title: fullExam.title,
-                classId: fullExam.classId ?? 0,
-                startTime: fullExam.startTime ? fullExam.startTime.slice(0, 16) : '',
-                endTime: fullExam.endTime ? fullExam.endTime.slice(0, 16) : '',
-                durationMinutes: fullExam.durationMinutes ?? 60,
-                shuffleQuestions: fullExam.shuffleQuestions ?? false,
-                shuffleAnswers: fullExam.shuffleAnswers ?? false,
-                antiCheatEnabled: fullExam.antiCheatEnabled ?? false,
-                questionIds: fullExam.questions ? fullExam.questions.map((q: Question) => q.id) : [],
-            })
-            setDialogOpen(true)
-        } catch {
-            toast.error('Không thể lấy thông tin chi tiết bài thi')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const handleSubmit = async () => {
-        if (!form.title.trim() || !form.classId || !form.startTime || !form.endTime) {
-            toast.error('Vui lòng điền đầy đủ thông tin bắt buộc')
-            return
-        }
-
-        setSubmitting(true)
-        try {
-            const body: ExamRequest = {
-                ...form,
-                startTime: new Date(form.startTime).toISOString(),
-                endTime: new Date(form.endTime).toISOString(),
-            }
-
-            if (editing) {
-                await api.put(`/exams/${editing.id}`, body)
-                toast.success('Cập nhật bài thi thành công')
-            } else {
-                await api.post(`/exams?teacherId=${user?.id ?? 0}`, body)
-                toast.success('Tạo bài thi thành công')
-            }
-            resetForm()
-            if (selectedClassId) fetchExams(selectedClassId)
-        } catch { toast.error(editing ? 'Cập nhật thất bại' : 'Tạo mới thất bại') }
-        finally { setSubmitting(false) }
+    const handleClassChange = (id: number | null) => {
+        setSelectedClassId(id)
+        if (id) setSearchParams({ classId: id.toString() })
+        else setSearchParams({})
     }
 
     const handleDelete = async () => {
@@ -222,13 +151,7 @@ export default function ExamsPage() {
         } catch { toast.error('Lỗi khi đóng') }
     }
 
-    const toggleQuestion = (qId: number) => {
-        const ids = form.questionIds ?? []
-        setForm({ ...form, questionIds: ids.includes(qId) ? ids.filter(id => id !== qId) : [...ids, qId] })
-    }
-
     const filtered = exams.filter(e => e.title.toLowerCase().includes(search.toLowerCase()))
-    const filteredQuestions = questions.filter(q => q.questionText.toLowerCase().includes(questionSearch.toLowerCase()))
 
     const stats = [
         { title: 'Tổng số bài thi', value: statsData?.totalExams?.toString() || '0', icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
@@ -244,8 +167,10 @@ export default function ExamsPage() {
                     <h1 className="text-3xl font-black tracking-tight uppercase">Quản lý bài thi</h1>
                     <p className="text-muted-foreground mt-2 font-medium">Tạo đề thi, thiết lập phòng thi và theo dõi kết quả của học sinh.</p>
                 </div>
-                <Button onClick={openCreate} disabled={!selectedClassId} className="h-14 px-8 rounded-2xl gap-3 font-black text-lg bg-primary shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    <Plus className="h-6 w-6" /> TẠO BÀI THI MỚI
+                <Button asChild disabled={!selectedClassId} className="h-14 px-8 rounded-2xl gap-3 font-black text-lg bg-primary shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <Link to={`/exams/create${selectedClassId ? `?classId=${selectedClassId}` : ''}`}>
+                        <Plus className="h-6 w-6" /> TẠO BÀI THI MỚI
+                    </Link>
                 </Button>
             </div>
 
@@ -280,7 +205,7 @@ export default function ExamsPage() {
                             <select
                                 className="bg-transparent border-none text-sm font-black focus:ring-0 cursor-pointer min-w-[200px]"
                                 value={selectedClassId ?? ''}
-                                onChange={(e) => setSelectedClassId(e.target.value ? Number(e.target.value) : null)}
+                                onChange={(e) => handleClassChange(e.target.value ? Number(e.target.value) : null)}
                             >
                                 <option value="">-- Chọn lớp học --</option>
                                 {classes.map(c => <option key={c.id} value={c.id}>{c.name} {c.schoolName ? `(${c.schoolName})` : ''}</option>)}
@@ -374,12 +299,14 @@ export default function ExamsPage() {
                                                             <Lock className="h-5 w-5" />
                                                         </Button>
                                                     )}
-                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 text-muted-foreground/40 hover:text-foreground transition-all" onClick={() => openEdit(exam)}>
-                                                        <Edit className="h-5 w-5" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-all" onClick={() => { setDeleting(exam); setDeleteOpen(true) }}>
-                                                        <Trash2 className="h-5 w-5" />
-                                                    </Button>
+                                                     <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5 text-muted-foreground/40 hover:text-foreground transition-all">
+                                                         <Link to={`/exams/edit/${exam.id}`}>
+                                                            <Edit className="h-5 w-5" />
+                                                         </Link>
+                                                     </Button>
+                                                     <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-all" onClick={() => { setDeleting(exam); setDeleteOpen(true) }}>
+                                                         <Trash2 className="h-5 w-5" />
+                                                     </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -392,91 +319,6 @@ export default function ExamsPage() {
             </Card>
 
             {/* Dialogs scaled & rounded */}
-            <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm() }}>
-                <DialogContent className="max-w-3xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-                    <DialogHeader className="p-8 bg-muted/20 border-b border-border/40">
-                        <DialogTitle className="text-2xl font-black uppercase tracking-tight">{editing ? 'Chỉnh sửa bài thi' : 'Thiết lập bài thi mới'}</DialogTitle>
-                        <DialogDescription className="font-medium">Cấu hình thời gian, phòng thi và danh sách câu hỏi.</DialogDescription>
-                    </DialogHeader>
-                    <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Tiêu đề bài thi</Label>
-                                    <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-12 bg-muted/20 rounded-2xl border-border/50 font-bold" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Lớp học mục tiêu</Label>
-                                    <select 
-                                        className="w-full h-12 bg-muted/20 rounded-2xl border border-border/50 px-4 text-sm font-bold focus:ring-2 focus:ring-primary/20"
-                                        value={form.classId} onChange={(e) => setForm({ ...form, classId: Number(e.target.value) })}
-                                    >
-                                        <option value={0}>-- Chọn lớp học --</option>
-                                        {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Ngày bắt đầu</Label>
-                                        <Input type="datetime-local" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} className="h-12 bg-muted/20 rounded-2xl border-border/50 font-bold" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Ngày kết thúc</Label>
-                                        <Input type="datetime-local" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} className="h-12 bg-muted/20 rounded-2xl border-border/50 font-bold" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Thời lượng (Phút)</Label>
-                                    <Input type="number" value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })} className="h-12 bg-muted/20 rounded-2xl border-border/50 font-bold" />
-                                </div>
-                                <div className="flex flex-wrap gap-4 pt-4 border-t border-border/30">
-                                    {['shuffleQuestions', 'shuffleAnswers', 'antiCheatEnabled'].map(opt => (
-                                        <label key={opt} className="flex items-center gap-3 cursor-pointer group">
-                                            <input type="checkbox" checked={(form as any)[opt]} onChange={(e) => setForm({ ...form, [opt]: e.target.checked })} className="h-5 w-5 rounded-lg accent-primary border-border bg-muted/20" />
-                                            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
-                                                {opt === 'shuffleQuestions' ? 'Trộn câu' : opt === 'shuffleAnswers' ? 'Trộn đáp án' : 'Chống gian lận'}
-                                            </span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase text-primary tracking-widest bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10">BỘ CÂU HỎI ({(form.questionIds ?? []).length} đã chọn)</Label>
-                                <div className="relative group">
-                                    <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
-                                    <Input placeholder="Tìm câu hỏi..." value={questionSearch} onChange={(e) => setQuestionSearch(e.target.value)} className="pl-11 h-12 bg-muted/20 rounded-2xl border-border/50 font-bold" />
-                                </div>
-                                <ScrollArea className="h-[350px] rounded-2xl border border-border/50 bg-muted/5 p-4">
-                                    <div className="space-y-2">
-                                        {filteredQuestions.map(q => (
-                                            <label key={q.id} className={cn(
-                                                "flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer group",
-                                                (form.questionIds ?? []).includes(q.id) ? "bg-primary/5 border-primary/20" : "bg-transparent border-transparent hover:bg-muted/10"
-                                            )}>
-                                                <input type="checkbox" checked={(form.questionIds ?? []).includes(q.id)} onChange={() => toggleQuestion(q.id)} className="mt-1 h-5 w-5 rounded-lg accent-primary border-border bg-muted/20" />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-foreground leading-snug line-clamp-2">{q.questionText}</p>
-                                                    <div className="flex items-center gap-2 mt-2">
-                                                        <Badge variant="outline" className="text-[8px] font-black uppercase border-border/50">{q.questionType}</Badge>
-                                                        <span className="text-[10px] font-black text-muted-foreground/30 uppercase tracking-widest">ID: #{q.id}</span>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter className="p-8 bg-muted/10 border-t border-border/40 gap-3">
-                        <Button variant="ghost" onClick={resetForm} disabled={submitting} className="h-12 px-8 rounded-2xl font-black transition-all">HỦY BỎ</Button>
-                        <Button onClick={handleSubmit} disabled={submitting} className="h-12 px-10 rounded-2xl font-black bg-primary shadow-xl shadow-primary/20">
-                            {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : editing ? 'LƯU THAY ĐỔI' : 'XÁC NHẬN TẠO'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             {/* Delete Alert with premium look */}
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

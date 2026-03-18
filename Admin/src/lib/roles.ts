@@ -12,6 +12,13 @@ export const ROLES = {
 /** Allowed roles that can access the Admin panel */
 export const ADMIN_PANEL_ROLES = [ROLES.ADMIN, ROLES.SCHOOL] as const
 
+export const ROLE_OPTIONS = [
+    { label: 'Admin', value: ROLES.ADMIN },
+    { label: 'Học sinh', value: ROLES.STUDENT },
+    { label: 'Giáo viên', value: ROLES.TEACHER },
+    { label: 'Trường học', value: ROLES.SCHOOL },
+] as const
+
 export function hasRole(userRoles: string[], role: string): boolean {
     return userRoles.includes(role)
 }

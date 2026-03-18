@@ -9,6 +9,7 @@ export interface ExamResponse {
     durationMinutes?: number; shuffleQuestions?: boolean; shuffleAnswers?: boolean;
     antiCheatEnabled?: boolean; questionCount?: number; totalPoints?: number;
     submittedCount?: number; averageScore?: number; scorePublished?: boolean; createdAt?: string;
+    questions?: any[];
 }
 export interface ExamRequest {
     title: string; classId: number; startTime: string; endTime: string;

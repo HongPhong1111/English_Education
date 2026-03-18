@@ -16,6 +16,9 @@ import {
     Award,
     Trophy,
     Settings,
+    BookOpen,
+    Languages,
+    FileText,
 } from 'lucide-react'
 import { useAppDispatch } from '@/app/hooks'
 import { useRole } from '@/app/useRole'
@@ -27,17 +30,21 @@ const navItems = [
     { title: 'Trường học', href: '/schools', icon: School, roles: [ROLES.ADMIN] },
     { title: 'Tất cả người dùng', href: '/users', icon: Users, roles: [ROLES.ADMIN] },
     { title: 'Thông báo', href: '/notifications', icon: Bell, roles: [ROLES.ADMIN] },
-    { title: 'Xếp hạng', href: '/leaderboard', icon: Trophy, roles: [ROLES.ADMIN, ROLES.SCHOOL] },
     { title: 'Huy hiệu', href: '/badges', icon: Award, roles: [ROLES.ADMIN] },
 
     // SCHOOL only pages - ordered from largest to smallest scope
-    { title: 'Lớp học', href: '/classrooms', icon: GraduationCap, roles: [ROLES.SCHOOL] },
+    // SCHOOL/TEACHER pages
+    { title: 'Lớp học', href: '/classrooms', icon: GraduationCap, roles: [ROLES.SCHOOL, ROLES.TEACHER] },
+    { title: 'Học sinh', href: '/students', icon: Users, roles: [ROLES.SCHOOL, ROLES.TEACHER] },
     { title: 'Giáo viên', href: '/teachers', icon: GraduationCapIcon, roles: [ROLES.SCHOOL] },
-    { title: 'Học sinh', href: '/students', icon: Users, roles: [ROLES.SCHOOL] },
-    { title: 'Điểm', href: '/grades', icon: Award, roles: [ROLES.SCHOOL] },
+    { title: 'Bài giảng', href: '/lessons', icon: BookOpen, roles: [ROLES.ADMIN, ROLES.SCHOOL, ROLES.TEACHER] },
+    { title: 'Từ vựng', href: '/vocabulary', icon: Languages, roles: [ROLES.ADMIN, ROLES.SCHOOL, ROLES.TEACHER] },
+    { title: 'Bài thi', href: '/exams', icon: FileText, roles: [ROLES.ADMIN, ROLES.SCHOOL, ROLES.TEACHER] },
+    { title: 'Điểm số', href: '/grades', icon: Award, roles: [ROLES.SCHOOL, ROLES.TEACHER] },
+    { title: 'Xếp hạng', href: '/leaderboard', icon: Trophy, roles: [ROLES.ADMIN, ROLES.SCHOOL, ROLES.TEACHER] },
 
     // COMMON pages
-    { title: 'Cài đặt', href: '/settings', icon: Settings, roles: [ROLES.ADMIN, ROLES.SCHOOL] },
+    { title: 'Cài đặt', href: '/settings', icon: Settings, roles: [ROLES.ADMIN, ROLES.SCHOOL, ROLES.TEACHER] },
 ]
 
 interface SidebarProps {

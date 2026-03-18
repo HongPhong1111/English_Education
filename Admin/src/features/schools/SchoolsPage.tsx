@@ -1,41 +1,35 @@
 import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
 import { School, Plus, Search, Edit, Trash2, Loader2, Eye, TrendingUp, CheckCircle, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import api from '@/lib/api'
 import { toast } from 'sonner'
 import { useRole } from '@/app/useRole'
-import type { ApiResponse, School as SchoolType, SchoolRequest } from '@/types/api'
-
-const emptyForm: SchoolRequest = {
-    name: '',
-    address: '',
-    phone: '',
-    email: '',
-    trialEndDate: '',
-    isActive: true,
-    managerUsername: '',
-    managerPassword: '',
-}
+import type { ApiResponse, School as SchoolType } from '@/types/api'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function SchoolsPage() {
     const { isAdmin } = useRole()
+    const navigate = useNavigate()
     const [schools, setSchools] = useState<SchoolType[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [editingSchool, setEditingSchool] = useState<SchoolType | null>(null)
-    const [form, setForm] = useState<SchoolRequest>({ ...emptyForm })
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [deletingSchool, setDeletingSchool] = useState<SchoolType | null>(null)
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
-    const [detailOpen, setDetailOpen] = useState(false)
-    const [viewingSchool, setViewingSchool] = useState<SchoolType | null>(null)
     const [submitting, setSubmitting] = useState(false)
     const [statsData, setStatsData] = useState<any>(null)
 
@@ -68,39 +62,6 @@ export default function SchoolsPage() {
         fetchDashboardStats()
     }, [])
 
-    const handleSubmit = async () => {
-        if (!form.name.trim()) {
-            toast.error('Vui lòng nhập tên trường')
-            return
-        }
-        if (!editingSchool) {
-            if (!form.managerUsername?.trim()) {
-                toast.error('Vui lòng nhập tên đăng nhập quản lý')
-                return
-            }
-            if (!form.managerPassword?.trim() || form.managerPassword.length < 6) {
-                toast.error('Mật khẩu quản lý phải ít nhất 6 ký tự')
-                return
-            }
-        }
-        setSubmitting(true)
-        try {
-            if (editingSchool) {
-                await api.put(`/schools/${editingSchool.id}`, form)
-                toast.success('Cập nhật trường học thành công')
-            } else {
-                await api.post('/schools', form)
-                toast.success('Thêm trường học thành công')
-            }
-            fetchSchools()
-            resetForm()
-        } catch {
-            toast.error(editingSchool ? 'Cập nhật thất bại' : 'Thêm trường thất bại')
-        } finally {
-            setSubmitting(false)
-        }
-    }
-
     const handleDelete = async () => {
         if (!deletingSchool) return
         setSubmitting(true)
@@ -115,27 +76,6 @@ export default function SchoolsPage() {
         } finally {
             setSubmitting(false)
         }
-    }
-
-    const resetForm = () => {
-        setDialogOpen(false)
-        setEditingSchool(null)
-        setForm({ ...emptyForm })
-    }
-
-    const openEdit = (school: SchoolType) => {
-        setEditingSchool(school)
-        setForm({
-            name: school.name,
-            address: school.address || '',
-            phone: school.phone || '',
-            email: school.email || '',
-            trialEndDate: school.trialEndDate || '',
-            isActive: school.isActive ?? true,
-            managerUsername: '',
-            managerPassword: '',
-        })
-        setDialogOpen(true)
     }
 
     const filtered = schools.filter((s) => {
@@ -164,9 +104,11 @@ export default function SchoolsPage() {
                     <p className="text-muted-foreground mt-1.5 font-medium">Theo dõi và quản lý mạng lưới các cơ sở giáo dục của bạn.</p>
                 </div>
                 {isAdmin && (
-                    <Button onClick={() => { resetForm(); setDialogOpen(true) }} className="h-12 px-6 rounded-xl gap-2 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary">
-                        <Plus className="h-5 w-5" /> Thêm trường học
-                    </Button>
+                    <Link to="/schools/create">
+                        <Button className="h-12 px-6 rounded-xl gap-2 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary">
+                            <Plus className="h-5 w-5" /> Thêm trường học
+                        </Button>
+                    </Link>
                 )}
             </div>
 
@@ -190,11 +132,6 @@ export default function SchoolsPage() {
                                 )}
                                 {stat.title.includes('đang hoạt động') && (
                                     <div className="text-muted-foreground/30 font-black text-[10px] uppercase tracking-widest pt-1">
-                                        {stat.change}
-                                    </div>
-                                )}
-                                {stat.title.includes('Yêu cầu') && (
-                                    <div className="text-amber-500/60 font-black text-[10px] uppercase tracking-widest pt-1 border-b border-amber-500/20">
                                         {stat.change}
                                     </div>
                                 )}
@@ -293,7 +230,6 @@ export default function SchoolsPage() {
                                                 <div className="max-w-[200px] truncate font-bold text-foreground/80 text-sm">
                                                     {school.address || 'Chưa cập nhật'}
                                                 </div>
-                                                <div className="text-[10px] font-black text-muted-foreground/20 mt-1 uppercase tracking-tighter">Hồ Chí Minh, VN</div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-bold text-foreground/80 text-sm">{school.email || '—'}</div>
@@ -312,12 +248,16 @@ export default function SchoolsPage() {
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
                                                 <div className="flex justify-end gap-2">
-                                                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-all" onClick={() => { setViewingSchool(school); setDetailOpen(true) }}>
-                                                         <Eye className="h-4.5 w-4.5" />
-                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-all" onClick={() => openEdit(school)}>
-                                                        <Edit className="h-4.5 w-4.5" />
-                                                    </Button>
+                                                     <Link to={`/schools/${school.id}`}>
+                                                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-all">
+                                                             <Eye className="h-4.5 w-4.5" />
+                                                         </Button>
+                                                     </Link>
+                                                    <Link to={`/schools/edit/${school.id}`}>
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground/60 hover:text-foreground transition-all">
+                                                            <Edit className="h-4.5 w-4.5" />
+                                                        </Button>
+                                                    </Link>
                                                     {isAdmin && (
                                                         <Button 
                                                             variant="ghost" 
@@ -362,178 +302,35 @@ export default function SchoolsPage() {
                 </CardContent>
             </Card>
 
-            {/* Create/Edit Dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{editingSchool ? 'Chỉnh sửa trường học' : 'Thêm trường học mới'}</DialogTitle>
-                        <DialogDescription>Điền thông tin trường học bên dưới</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Tên trường *</Label>
-                            <Input
-                                value={form.name}
-                                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                placeholder="VD: THCS Nguyễn Du"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Địa chỉ</Label>
-                            <Input
-                                value={form.address || ''}
-                                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                                placeholder="Địa chỉ trường"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Số điện thoại</Label>
-                                <Input
-                                    value={form.phone || ''}
-                                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                    placeholder="SĐT"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Email</Label>
-                                <Input
-                                    value={form.email || ''}
-                                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                    placeholder="Email"
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Ngày hết hạn dùng thử</Label>
-                                <Input
-                                    type="date"
-                                    value={form.trialEndDate || ''}
-                                    onChange={(e) => setForm({ ...form, trialEndDate: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Trạng thái</Label>
-                                <select
-                                    value={form.isActive ? 'true' : 'false'}
-                                    onChange={(e) => setForm({ ...form, isActive: e.target.value === 'true' })}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                >
-                                    <option value="true">Hoạt động</option>
-                                    <option value="false">Tạm dừng</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {!editingSchool && (
-                            <div className="pt-4 border-t border-border/50 space-y-4">
-                                <Label className="text-xs font-black text-primary uppercase tracking-widest">Tài khoản quản lý trường</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Tên đăng nhập *</Label>
-                                        <Input
-                                            value={form.managerUsername}
-                                            onChange={(e) => setForm({ ...form, managerUsername: e.target.value })}
-                                            placeholder="username"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Mật khẩu *</Label>
-                                        <Input
-                                            type="password"
-                                            value={form.managerPassword}
-                                            onChange={(e) => setForm({ ...form, managerPassword: e.target.value })}
-                                            placeholder="******"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={resetForm} disabled={submitting}>
-                            Hủy
-                        </Button>
-                        <Button onClick={handleSubmit} disabled={submitting}>
-                            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {editingSchool ? 'Cập nhật' : 'Tạo mới'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
             {/* Delete Confirmation */}
-            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Xác nhận xóa</DialogTitle>
-                        <DialogDescription>
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+                        <AlertDialogDescription>
                             Bạn có chắc muốn xóa trường &quot;{deletingSchool?.name}&quot;? Hành động này không thể hoàn tác.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={submitting}>
-                            Hủy
-                        </Button>
-                        <Button variant="destructive" onClick={handleDelete} disabled={submitting}>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={submitting}>Hủy</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={(e) => {
+                                e.preventDefault()
+                                handleDelete()
+                            }} 
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={submitting}
+                        >
                             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Xóa
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* School Detail Dialog */}
-            <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-                <DialogContent className="sm:max-w-[500px] rounded-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-black">Chi tiết trường học</DialogTitle>
-                        <DialogDescription>Thông tin đầy đủ của cơ sở giáo dục</DialogDescription>
-                    </DialogHeader>
-                    {viewingSchool && (
-                        <div className="space-y-6 py-4">
-                            <div className="flex items-center gap-5 p-5 bg-muted/30 rounded-2xl border border-border/50">
-                                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-3xl font-black">
-                                    {viewingSchool.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-black text-foreground">{viewingSchool.name}</h3>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">ID: #{viewingSchool.id}</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Địa chỉ</Label>
-                                    <p className="text-sm font-bold text-foreground leading-snug">{viewingSchool.address || '—'}</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Trạng thái</Label>
-                                    <div>
-                                        <span className={cn(
-                                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
-                                            viewingSchool.isActive ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"
-                                        )}>
-                                            {viewingSchool.isActive ? "Đang hoạt động" : "Tạm dừng"}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Email liên hệ</Label>
-                                    <p className="text-sm font-bold text-foreground">{viewingSchool.email || '—'}</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Số điện thoại</Label>
-                                    <p className="text-sm font-bold text-foreground">{viewingSchool.phone || '—'}</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Hết hạn dùng thử</Label>
-                                    <p className="text-sm font-bold text-foreground">{viewingSchool.trialEndDate || 'Vĩnh viễn'}</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Ngày tạo</Label>
-                                    <p className="text-sm font-bold text-foreground">{formatDate(viewingSchool.createdAt)}</p>
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
+    )
+}
+.createdAt)}</p>
                                 </div>
                             </div>
                         </div>

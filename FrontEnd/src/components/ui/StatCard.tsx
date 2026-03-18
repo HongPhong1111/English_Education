@@ -5,15 +5,16 @@ interface StatCardProps {
     label: string
     value: string | number
     change?: string
-    color: string
+    color?: string
+    className?: string
 }
 
-export default function StatCard({ icon, label, value, change, color }: StatCardProps) {
+export default function StatCard({ icon, label, value, change, color = 'text-blue-500', className = '' }: StatCardProps) {
     const isPositive = change?.startsWith('+')
     const isNegative = change?.startsWith('-')
 
     return (
-        <div className="card p-6 hover:shadow-lg transition-shadow duration-200">
+        <div className={`card p-6 hover:shadow-lg transition-shadow duration-200 ${className}`}>
             <div className="flex items-start justify-between">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-current/10 ${color}`}>
                     {icon}
