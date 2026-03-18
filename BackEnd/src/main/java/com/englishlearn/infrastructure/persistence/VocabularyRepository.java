@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface VocabularyRepository extends JpaRepository<Vocabulary, Long> {
@@ -28,4 +29,17 @@ public interface VocabularyRepository extends JpaRepository<Vocabulary, Long> {
 
     @Query("SELECT COUNT(v) FROM Vocabulary v WHERE v.lesson.id = :lessonId")
     Long countByLessonId(@Param("lessonId") Long lessonId);
+
+    @Query("""
+            SELECT v
+            FROM Vocabulary v
+            WHERE v.lesson.id = :lessonId
+              AND (
+                LOWER(v.word) = LOWER(:text)
+                OR LOWER(COALESCE(v.meaning, '')) = LOWER(:text)
+              )
+            """)
+    Optional<Vocabulary> findByLessonIdAndWordOrMeaningIgnoreCase(
+            @Param("lessonId") Long lessonId,
+            @Param("text") String text);
 }

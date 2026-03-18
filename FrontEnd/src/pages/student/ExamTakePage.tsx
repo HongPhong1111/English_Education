@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AlertTriangle, Send, Loader2, ShieldAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { examApi, ExamTakeDTO, SubmitExamRequest } from '../../services/api/examApi'
 import Timer from '../../components/ui/Timer'
 import QuizQuestion from '../../components/ui/QuizQuestion'
 import Dialog from '../../components/ui/Dialog'
+import Breadcrumb from '../../components/ui/Breadcrumb'
 
 interface ExamQuestion {
     id: number
@@ -15,6 +17,7 @@ interface ExamQuestion {
 }
 
 export default function ExamTakePage() {
+    const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const { user } = useAuthStore()
@@ -45,7 +48,8 @@ export default function ExamTakePage() {
                 setExamData(data)
 
                 // Store examResultId for result page
-                sessionStorage.setItem(`exam_result_${examId}`, String(data.examResultId))
+                sessionStorage.removeItem(`exam_result_${examId}`)
+                sessionStorage.setItem(`exam_result_${user.id}_${examId}`, String(data.examResultId))
 
                 // Extract questions and duration from exam data
                 const examQuestions = (data as any).questions || []
@@ -55,7 +59,16 @@ export default function ExamTakePage() {
                 setDurationSeconds(duration * 60)
             } catch (err: any) {
                 console.error('Failed to start exam:', err)
-                setError(err.response?.data?.message || 'Không thể bắt đầu bài thi. Có thể bạn đã làm bài thi này rồi.')
+                const message = err.response?.data?.message || ''
+                if (typeof message === 'string') {
+                    const vn = 'Bạn đã hoàn thành bài thi này'
+                    const en = t('exams.alreadyCompleted')
+                    if (message.includes(vn) || message.includes(en)) {
+                        navigate(`/exams/${examId}/result`, { replace: true })
+                        return
+                    }
+                }
+                setError(message || t('exams.cannotStart'))
             } finally {
                 setLoading(false)
             }
@@ -99,7 +112,11 @@ export default function ExamTakePage() {
 
             const answerPayload: SubmitExamRequest['answers'] = []
             answers.forEach((selectedOptionIds, questionId) => {
-                answerPayload.push({ questionId, selectedOptionIds })
+                answerPayload.push({
+                    questionId,
+                    selectedOptionId: selectedOptionIds?.[0],
+                    selectedOptionIds,
+                })
             })
 
             await examApi.submitExam(examId, {
@@ -107,14 +124,16 @@ export default function ExamTakePage() {
                 answers: answerPayload,
             })
 
+            sessionStorage.removeItem(`exam_submit_success_${examId}`)
+            sessionStorage.setItem(`exam_submit_success_${user?.id}_${examId}`, '1')
             navigate(`/exams/${examId}/result`, { replace: true })
         } catch (err: any) {
             console.error('Failed to submit exam:', err)
-            setError(err.response?.data?.message || 'Không thể nộp bài. Vui lòng thử lại.')
+            setError(err.response?.data?.message || t('exams.submitError'))
             submittedRef.current = false
             setSubmitting(false)
         }
-    }, [examId, examResultId, answers, navigate])
+    }, [examId, examResultId, answers, navigate, user?.id])
 
     // Handle time up
     const handleTimeUp = useCallback(() => {
@@ -125,12 +144,13 @@ export default function ExamTakePage() {
 
     const answeredCount = answers.size
     const totalCount = questions.length
+    const examTitle = (examData as any)?.title as string | undefined
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
                 <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
-                <p style={{ color: 'var(--color-text-secondary)' }}>Đang tải bài thi...</p>
+                <p style={{ color: 'var(--color-text-secondary)' }}>{t('exams.sessionInitializing')}</p>
             </div>
         )
     }
@@ -145,7 +165,7 @@ export default function ExamTakePage() {
                         <AlertTriangle className="w-8 h-8 text-red-400" />
                     </div>
                     <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text)' }}>
-                        Không thể bắt đầu bài thi
+                        {t('exams.cannotStart')}
                     </h2>
                     <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                         {error}
@@ -154,7 +174,7 @@ export default function ExamTakePage() {
                         onClick={() => navigate('/exams')}
                         className="btn-secondary mt-2"
                     >
-                        Quay về danh sách
+                        {t('exams.backToList')}
                     </button>
                 </div>
             </div>
@@ -163,6 +183,11 @@ export default function ExamTakePage() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-6">
+            <Breadcrumb items={[
+                { label: t('sidebar.exams'), path: '/exams' },
+                { label: String((examData as any)?.examTitle || t('exams.sessionInitializing')) }
+            ]} />
+
             {/* Sticky header with timer */}
             <div
                 className="sticky top-0 z-40 -mx-4 px-4 py-4 backdrop-blur-md border-b mb-6"
@@ -173,6 +198,11 @@ export default function ExamTakePage() {
             >
                 <div className="flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-4">
+                        {examTitle && (
+                            <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
+                                {examTitle}
+                            </span>
+                        )}
                         {durationSeconds > 0 && (
                             <Timer
                                 durationSeconds={durationSeconds}
@@ -184,7 +214,7 @@ export default function ExamTakePage() {
                             className="text-sm font-medium"
                             style={{ color: 'var(--color-text-secondary)' }}
                         >
-                            {answeredCount}/{totalCount} câu đã trả lời
+                            {answeredCount}/{totalCount} {t('exams.questionsAnswered')}
                         </span>
                     </div>
 
@@ -192,7 +222,7 @@ export default function ExamTakePage() {
                         {tabSwitchCount > 0 && (
                             <span className="flex items-center gap-1.5 text-xs text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/25">
                                 <ShieldAlert className="w-3.5 h-3.5" />
-                                {tabSwitchCount} lần rời tab
+                                {t('exams.tabSwitches', { count: tabSwitchCount })}
                             </span>
                         )}
                         <button
@@ -205,7 +235,7 @@ export default function ExamTakePage() {
                             ) : (
                                 <Send className="w-4 h-4" />
                             )}
-                            Nộp bài
+                            {t('exams.submitExamButton')}
                         </button>
                     </div>
                 </div>
@@ -243,7 +273,7 @@ export default function ExamTakePage() {
                             </span>
                             {answers.has(question.id) && (
                                 <span className="text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/25">
-                                    Đã trả lời
+                                    {t('exams.questionsAnswered')}
                                 </span>
                             )}
                         </div>
@@ -270,7 +300,7 @@ export default function ExamTakePage() {
                         ) : (
                             <Send className="w-5 h-5" />
                         )}
-                        Nộp bài thi
+                        {t('exams.submitExamButton')}
                     </button>
                 </div>
             )}
@@ -279,37 +309,37 @@ export default function ExamTakePage() {
             <Dialog
                 open={showConfirmDialog}
                 onClose={() => setShowConfirmDialog(false)}
-                title="Xác nhận nộp bài"
+                title={t('exams.confirmSubmitTitle')}
                 footer={
                     <>
                         <button
                             onClick={() => setShowConfirmDialog(false)}
                             className="btn-secondary !py-2 !px-4 text-sm"
                         >
-                            Hủy
+                            {t('common.cancel')}
                         </button>
                         <button
                             onClick={handleSubmit}
                             className="btn-primary !py-2 !px-4 text-sm"
                         >
-                            Xác nhận nộp bài
+                            {t('exams.confirmSubmitTitle')}
                         </button>
                     </>
                 }
             >
                 <div className="space-y-3">
-                    <p>Bạn có chắc chắn muốn nộp bài?</p>
+                    <p>{t('exams.confirmSubmitMessage')}</p>
                     <div
                         className="p-3 rounded-lg text-sm"
                         style={{ backgroundColor: 'var(--color-bg-secondary)' }}
                     >
                         <p>
-                            Đã trả lời: <strong className="text-blue-500">{answeredCount}</strong> / {totalCount} câu
+                            {t('answeredCount', { answered: answeredCount, total: totalCount })}
                         </p>
                         {answeredCount < totalCount && (
                             <p className="text-yellow-400 mt-1 flex items-center gap-1.5">
                                 <AlertTriangle className="w-4 h-4" />
-                                Còn {totalCount - answeredCount} câu chưa trả lời
+                                {t('exams.remainingQuestions', { count: totalCount - answeredCount })}
                             </p>
                         )}
                     </div>

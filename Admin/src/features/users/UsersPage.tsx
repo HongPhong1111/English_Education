@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Link } from 'react-router-dom'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Users, Search, ChevronLeft, ChevronRight, Coins, Eye, Flame } from 'lucide-react'
+import { Users, Search, ChevronLeft, ChevronRight, Coins, Eye, Flame, UserPlus, Trash2, CheckCircle, Edit } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import api from '@/lib/api'
 import type { ApiResponse, Page, User } from '@/types/api'
+import { useRole } from '@/app/useRole'
 
 const ROLE_OPTIONS = [
-    { value: '', label: 'Tất cả' },
-    { value: 'ROLE_ADMIN', label: 'Admin' },
-    { value: 'ROLE_SCHOOL', label: 'Trường' },
-    { value: 'ROLE_TEACHER', label: 'Giáo viên' },
-    { value: 'ROLE_STUDENT', label: 'Học sinh' },
+    { label: 'Tất cả vai trò', value: '' },
+    { label: 'Admin', value: 'ROLE_ADMIN' },
+    { label: 'Học sinh', value: 'ROLE_STUDENT' },
+    { label: 'Giáo viên', value: 'ROLE_TEACHER' },
+    { label: 'Trường học', value: 'ROLE_SCHOOL' },
 ]
 
 export default function UsersPage() {
@@ -27,15 +28,16 @@ export default function UsersPage() {
     const [page, setPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
     const [totalElements, setTotalElements] = useState(0)
+    const [userStats, setUserStats] = useState({
+        totalUsers: 0,
+        activeUsers: 0,
+        teacherCount: 0,
+        studentCount: 0,
+        totalCoins: 0
+    })
 
-    // Coins dialog
-    const [coinsDialogOpen, setCoinsDialogOpen] = useState(false)
-    const [selectedUser, setSelectedUser] = useState<User | null>(null)
-    const [coinsAmount, setCoinsAmount] = useState('')
-
-    // Detail dialog
-    const [detailOpen, setDetailOpen] = useState(false)
-    const [detailUser, setDetailUser] = useState<User | null>(null)
+    // Role-based permissions
+    const { canCreateUser, canDeleteUser } = useRole()
 
     const fetchUsers = async () => {
         setLoading(true)
@@ -52,30 +54,48 @@ export default function UsersPage() {
         }
     }
 
-    useEffect(() => { fetchUsers() }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
-
-    const handleAddCoins = async () => {
-        if (!selectedUser || !coinsAmount) return
+    const fetchStats = async () => {
         try {
-            await api.post(`/users/${selectedUser.id}/coins?amount=${coinsAmount}`)
-            toast.success(`Đã thêm ${coinsAmount} xu cho ${selectedUser.fullName}`)
-            fetchUsers()
-        } catch {
-            toast.error('Thêm xu thất bại')
+            const response = await api.get<ApiResponse<any>>('/users/stats')
+            if (response.data.success) {
+                setUserStats(response.data.data)
+            }
+        } catch (error) {
+            console.error('Error fetching user stats:', error)
         }
-        setCoinsDialogOpen(false)
-        setCoinsAmount('')
+    }
+
+    useEffect(() => {
+        fetchUsers()
+        fetchStats()
+    }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleDeleteUser = async (userId: number, username: string) => {
+        if (!window.confirm(`Bạn có chắc chắn muốn xóa người dùng "${username}"?`)) {
+            return
+        }
+
+        try {
+            await api.delete(`/users/${userId}`)
+            toast.success(`Đã xóa người dùng ${username}`)
+            fetchUsers()
+        } catch (error: unknown) {
+            const msg = error && typeof error === 'object' && 'response' in error
+                ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+                : null
+            toast.error(msg || 'Xóa người dùng thất bại')
+        }
     }
 
     const getRoleBadge = (role: string) => {
-        const config: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-            ROLE_ADMIN: { label: 'Admin', variant: 'destructive' },
-            ROLE_SCHOOL: { label: 'Trường', variant: 'default' },
-            ROLE_TEACHER: { label: 'Giáo viên', variant: 'secondary' },
-            ROLE_STUDENT: { label: 'Học sinh', variant: 'outline' },
+        const config: Record<string, { label: string; bg: string; text: string }> = {
+            ROLE_ADMIN: { label: 'ADMIN', bg: 'bg-red-500/10 dark:bg-red-500/20', text: 'text-red-600 dark:text-red-400' },
+            ROLE_SCHOOL: { label: 'TRƯỜNG', bg: 'bg-blue-500/10 dark:bg-blue-500/20', text: 'text-blue-600 dark:text-blue-400' },
+            ROLE_TEACHER: { label: 'GIÁO VIÊN', bg: 'bg-emerald-500/10 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400' },
+            ROLE_STUDENT: { label: 'HỌC SINH', bg: 'bg-indigo-500/10 dark:bg-indigo-500/20', text: 'text-indigo-600 dark:text-indigo-400' },
         }
-        const c = config[role] || { label: role, variant: 'outline' as const }
-        return <Badge variant={c.variant}>{c.label}</Badge>
+        const c = config[role] || { label: role, bg: 'bg-muted', text: 'text-muted-foreground' }
+        return <span className={cn("px-2 py-1 rounded-md text-[10px] font-black tracking-wider uppercase", c.bg, c.text)}>{c.label}</span>
     }
 
     // Apply client-side filters
@@ -88,193 +108,185 @@ export default function UsersPage() {
         return matchSearch && matchRole
     })
 
+    const stats = [
+        { title: 'Tổng người dùng', value: userStats.totalUsers.toLocaleString(), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+        { title: 'Đang hoạt động', value: userStats.activeUsers.toLocaleString(), icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { title: 'Giáo viên', value: userStats.teacherCount.toLocaleString(), icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+        { title: 'Tổng xu hệ thống', value: userStats.totalCoins.toLocaleString(), icon: Coins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    ]
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="space-y-8 pb-10">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Quản lý người dùng</h1>
-                    <p className="text-muted-foreground mt-1">Tổng cộng {totalElements} người dùng</p>
+                    <h1 className="text-3xl font-black tracking-tight text-foreground">Quản lý người dùng</h1>
+                    <p className="text-muted-foreground mt-2 font-medium">Quản lý và theo dõi thông tin học sinh, giáo viên trong hệ thống.</p>
                 </div>
+                {canCreateUser && (
+                    <Link to="/users/create">
+                        <Button className="h-12 px-6 rounded-xl gap-2 font-black shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary">
+                            <UserPlus className="h-5 w-5" /> Tạo người dùng mới
+                        </Button>
+                    </Link>
+                )}
             </div>
 
-            <Card>
-                <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                        <CardTitle className="flex items-center gap-2">
-                            <Users className="h-5 w-5 text-primary" />
-                            Danh sách người dùng
-                        </CardTitle>
-                        <div className="flex items-center gap-3">
-                            {/* Role filter */}
-                            <select
-                                className="flex h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                value={roleFilter}
-                                onChange={(e) => setRoleFilter(e.target.value)}
-                            >
-                                {ROLE_OPTIONS.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
-                            {/* Search */}
-                            <div className="relative w-64">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input placeholder="Tìm kiếm..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((stat) => (
+                    <Card key={stat.title} className="premium-card border-none shadow-xl dark:shadow-none overflow-hidden">
+                        <CardContent className="p-7">
+                            <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center mb-5", stat.bg)}>
+                                <stat.icon className={cn("h-6 w-6", stat.color)} />
                             </div>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2">{stat.title}</p>
+                            <p className="text-3xl font-black text-foreground tracking-tight">{stat.value}</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Main Content Area */}
+            <Card className="premium-card border-none shadow-xl dark:shadow-none bg-card overflow-hidden">
+                <CardHeader className="p-8 pb-3">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                         <div className="flex items-center gap-2">
+                              <div className="flex bg-muted/30 p-1.5 rounded-2xl border border-border/50">
+                                 {ROLE_OPTIONS.map((opt) => (
+                                     <button
+                                         key={opt.value}
+                                         onClick={() => setRoleFilter(opt.value)}
+                                         className={cn(
+                                             "px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                                             roleFilter === opt.value 
+                                                 ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                                                 : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/50"
+                                         )}
+                                     >
+                                         {opt.label}
+                                     </button>
+                                 ))}
+                              </div>
+                         </div>
+                        <div className="relative group">
+                            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input 
+                                placeholder="Tìm kiếm..." 
+                                value={search} 
+                                onChange={(e) => setSearch(e.target.value)} 
+                                className="pl-11 pr-4 h-11 w-80 bg-muted/30 border-border/50 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 transition-all font-medium" 
+                            />
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-8 pt-5">
                     {loading ? (
-                        <div className="flex items-center justify-center h-40">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                        <div className="flex flex-col items-center justify-center h-80 gap-4">
+                            <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                            <p className="font-bold text-muted-foreground">Đang tải dữ liệu...</p>
                         </div>
                     ) : (
-                        <>
+                        <div className="rounded-2xl border border-border overflow-hidden">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-12">ID</TableHead>
-                                        <TableHead>Username</TableHead>
-                                        <TableHead>Họ tên</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Vai trò</TableHead>
-                                        <TableHead className="text-center">Xu</TableHead>
-                                        <TableHead className="text-center">Streak</TableHead>
-                                        <TableHead>Trạng thái</TableHead>
-                                        <TableHead className="text-right">Thao tác</TableHead>
+                                    <TableRow className="hover:bg-transparent border-border/50 bg-muted/30">
+                                        <TableHead className="h-14 font-black text-muted-foreground uppercase text-[10px] tracking-widest pl-8">Người dùng</TableHead>
+                                        <TableHead className="font-black text-muted-foreground uppercase text-[10px] tracking-widest text-center">Vai trò</TableHead>
+                                        <TableHead className="font-black text-muted-foreground uppercase text-[10px] tracking-widest text-center">Thống kê</TableHead>
+                                        <TableHead className="font-black text-muted-foreground uppercase text-[10px] tracking-widest text-center">Trạng thái</TableHead>
+                                        <TableHead className="font-black text-muted-foreground uppercase text-[10px] tracking-widest text-right pr-8">Thao tác</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filtered.length === 0 ? (
-                                        <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Không có người dùng</TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-20 font-bold">Không có người dùng nào được tìm thấy</TableCell></TableRow>
                                     ) : filtered.map((user) => (
-                                        <TableRow key={user.id}>
-                                            <TableCell className="font-medium">{user.id}</TableCell>
-                                            <TableCell className="font-medium">{user.username}</TableCell>
-                                            <TableCell>{user.fullName}</TableCell>
-                                            <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                                            <TableCell>
-                                                <div className="flex gap-1 flex-wrap">{user.roles.map((r) => <span key={r}>{getRoleBadge(r)}</span>)}</div>
+                                        <TableRow key={user.id} className="hover:bg-muted/10 border-border/40 transition-colors h-24 group">
+                                            <TableCell className="pl-8">
+                                                <div className="flex items-center gap-4">
+                                                    <Avatar className="h-12 w-12 border-none shadow-xl dark:shadow-none ring-1 ring-border/50 group-hover:ring-primary/30 transition-all">
+                                                        <AvatarImage src={user.avatarUrl} alt={user.fullName} />
+                                                        <AvatarFallback className="bg-muted text-primary text-[10px] font-black">
+                                                            {user.username.substring(0, 2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-black text-foreground leading-tight">{user.fullName}</span>
+                                                        <span className="text-[10px] font-black text-muted-foreground/30 mt-1 uppercase tracking-tight truncate max-w-[200px]">@{user.username} · {user.email}</span>
+                                                    </div>
+                                                </div>
                                             </TableCell>
-                                            <TableCell className="text-center font-medium text-amber-600">{user.coins ?? 0}</TableCell>
                                             <TableCell className="text-center">
-                                                <span className="flex items-center justify-center gap-1 text-orange-500">
-                                                    <Flame className="h-3.5 w-3.5" /> {user.streakDays ?? 0}
-                                                </span>
+                                                <div className="flex justify-center gap-1.5 flex-wrap">
+                                                    {user.roles.map((r) => <div key={r}>{getRoleBadge(r)}</div>)}
+                                                </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <Badge variant={user.isActive !== false ? 'default' : 'secondary'}>
-                                                    {user.isActive !== false ? 'Hoạt động' : 'Bị khóa'}
-                                                </Badge>
+                                            <TableCell className="text-center">
+                                                <div className="flex flex-col items-center gap-1.5">
+                                                    <div className="flex items-center gap-1.5 font-black text-sm text-foreground">
+                                                        <Coins className="h-4 w-4 text-amber-500" /> {user.coins?.toLocaleString() ?? 0}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 font-bold text-xs text-orange-500">
+                                                        <Flame className="h-3.5 w-3.5" /> {user.streakDays ?? 0}
+                                                    </div>
+                                                </div>
                                             </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-1">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Xem chi tiết" onClick={() => { setDetailUser(user); setDetailOpen(true) }}>
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Thêm xu" onClick={() => { setSelectedUser(user); setCoinsDialogOpen(true) }}>
-                                                        <Coins className="h-4 w-4 text-amber-500" />
-                                                    </Button>
+                                            <TableCell className="text-center">
+                                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-muted/30 border border-border/50">
+                                                    <div className={cn("h-1.5 w-1.5 rounded-full", user.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/30')} />
+                                                    <span className={user.isActive !== false ? 'text-emerald-500' : 'text-muted-foreground/30'}>
+                                                        {user.isActive !== false ? 'Hoạt động' : 'Bị khóa'}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right pr-8">
+                                                <div className="flex justify-end gap-2">
+                                                    <Link to={`/users/${user.id}`}>
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all">
+                                                            <Eye className="h-4.5 w-4.5" />
+                                                        </Button>
+                                                    </Link>
+                                                    <Link to={`/users/edit/${user.id}`}>
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 transition-all">
+                                                            <Edit className="h-4.5 w-4.5" />
+                                                        </Button>
+                                                    </Link>
+                                                    {canDeleteUser && (
+                                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-all" onClick={() => handleDeleteUser(user.id, user.username)}>
+                                                            <Trash2 className="h-4.5 w-4.5" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
-
-                            {/* Pagination */}
-                            <div className="flex items-center justify-between mt-4">
-                                <p className="text-sm text-muted-foreground">
-                                    Trang {page + 1} / {Math.max(totalPages, 1)}
-                                </p>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1}>
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* User Detail Dialog */}
-            <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Chi tiết người dùng</DialogTitle>
-                        <DialogDescription>Thông tin đầy đủ của {detailUser?.fullName}</DialogDescription>
-                    </DialogHeader>
-                    {detailUser && (
-                        <div className="space-y-3 py-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">ID</Label>
-                                    <p className="font-medium">{detailUser.id}</p>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">Username</Label>
-                                    <p className="font-medium">{detailUser.username}</p>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">Họ tên</Label>
-                                    <p className="font-medium">{detailUser.fullName}</p>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">Email</Label>
-                                    <p className="font-medium">{detailUser.email}</p>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">Vai trò</Label>
-                                    <div className="flex gap-1 mt-1">{detailUser.roles.map((r) => <span key={r}>{getRoleBadge(r)}</span>)}</div>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">Trạng thái</Label>
-                                    <p>
-                                        <Badge variant={detailUser.isActive !== false ? 'default' : 'secondary'}>
-                                            {detailUser.isActive !== false ? 'Hoạt động' : 'Bị khóa'}
-                                        </Badge>
-                                    </p>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">Xu</Label>
-                                    <p className="font-bold text-amber-600">{detailUser.coins ?? 0}</p>
-                                </div>
-                                <div>
-                                    <Label className="text-muted-foreground text-xs">Chuỗi ngày</Label>
-                                    <p className="font-bold text-orange-500 flex items-center gap-1"><Flame className="h-4 w-4" />{detailUser.streakDays ?? 0} ngày</p>
-                                </div>
-                            </div>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDetailOpen(false)}>Đóng</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
-            {/* Add Coins Dialog */}
-            <Dialog open={coinsDialogOpen} onOpenChange={setCoinsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Thêm xu cho {selectedUser?.fullName}</DialogTitle>
-                        <DialogDescription>Nhập số xu muốn thêm cho người dùng</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="coins">Số xu</Label>
-                            <Input id="coins" type="number" placeholder="Nhập số xu" value={coinsAmount} onChange={(e) => setCoinsAmount(e.target.value)} />
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between mt-8 px-2">
+                        <p className="text-xs font-black text-muted-foreground/30 uppercase tracking-widest">
+                            Hiển thị {page * 10 + 1}-{Math.min((page + 1) * 10, totalElements)} / {totalElements}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-border/50 text-muted-foreground/40 bg-background hover:bg-muted" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}>
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button className="h-10 w-10 rounded-xl font-black bg-primary shadow-lg shadow-primary/20">{page+1}</Button>
+                            {page + 1 < totalPages && <Button variant="ghost" className="h-10 w-10 rounded-xl font-black text-muted-foreground/40 hover:bg-muted" onClick={() => setPage(page + 1)}>{page + 2}</Button>}
+                            {page + 2 < totalPages && <Button variant="ghost" className="h-10 w-10 rounded-xl font-bold text-muted-foreground" onClick={() => setPage(page + 2)}>{page + 3}</Button>}
+                            {totalPages > 4 && <span className="px-1 text-muted-foreground/30">...</span>}
+                            {totalPages > 1 && page < totalPages - 3 && <Button variant="ghost" className="h-10 w-10 rounded-xl font-bold text-muted-foreground" onClick={() => setPage(totalPages - 1)}>{totalPages}</Button>}
+                            <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-border text-muted-foreground" onClick={() => setPage(page + 1)} disabled={page >= totalPages - 1}>
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setCoinsDialogOpen(false)}>Hủy</Button>
-                        <Button onClick={handleAddCoins}>Thêm xu</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                </CardContent>
+            </Card>
         </div>
     )
 }
